@@ -25,3 +25,24 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+html {
+  animation-name: test;
+  animation-duration: 5s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease;
+}
+
+@keyframes test {
+  0% {
+    filter: blur(0px);
+  }
+
+  50% {
+    filter: blur(0.5px);
+  }
+
+  100% {
+    filter: blur(0px);
+  }
+}
