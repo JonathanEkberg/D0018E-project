@@ -1,4 +1,4 @@
-CREATE TABLE `user` (
+ CREATE TABLE IF NOT EXISTS `user` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -8,7 +8,7 @@ CREATE TABLE `user` (
   `password` varchar(255) NOT NULL
 );
 
-CREATE TABLE `product` (
+ CREATE TABLE IF NOT EXISTS `product` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -19,14 +19,14 @@ CREATE TABLE `product` (
   `stock` int UNSIGNED
 );
 
-CREATE TABLE `order` (
+ CREATE TABLE IF NOT EXISTS `order` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `user_id` integer
 );
 
-CREATE TABLE `product_order` (
+ CREATE TABLE IF NOT EXISTS `product_order` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -35,7 +35,7 @@ CREATE TABLE `product_order` (
   `product_id` integer
 );
 
-CREATE TABLE `review` (
+ CREATE TABLE IF NOT EXISTS `review` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -45,14 +45,14 @@ CREATE TABLE `review` (
   `product_id` integer
 );
 
-CREATE TABLE `shopping_cart` (
+ CREATE TABLE IF NOT EXISTS `shopping_cart` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `user_id` integer UNIQUE
 );
 
-CREATE TABLE `shopping_cart_item` (
+ CREATE TABLE IF NOT EXISTS `shopping_cart_item` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -77,7 +77,3 @@ ALTER TABLE `review` ADD FOREIGN KEY (`product_id`) REFERENCES `product` (`id`);
 ALTER TABLE `review` ADD FOREIGN KEY (`user_id`) REFERENCES `user` (`id`);
 
 ALTER TABLE `product_order` ADD FOREIGN KEY (`amount`) REFERENCES `product_order` (`order_id`);
-
-ALTER TABLE `product` ADD FOREIGN KEY (`id`) REFERENCES `product` (`created_at`);
-
-ALTER TABLE `product_order` ADD FOREIGN KEY (`created_at`) REFERENCES `product_order` (`amount`);
