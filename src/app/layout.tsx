@@ -16,11 +16,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className={inter.className}>
-        <header className="max-w-lg w-full mx-auto flex justify-center items-center space-x-4 py-2">
-          <Image src="/logo.png" alt="Egg store logo" width={64} height={64} />
-          <h1 className="text-3xl font-bold">Egg store</h1>
+        <header className="max-w-lg w-full mx-auto flex justify-center items-center space-x-4 py-4">
+          <Image
+            loading="eager"
+            src="/logo.png"
+            alt="Egg store logo"
+            width={64}
+            height={64}
+          />
+          <h1 className="text-5xl font-bold">Egg store</h1>
         </header>
         {children}
       </body>

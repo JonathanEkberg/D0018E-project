@@ -1,6 +1,19 @@
 import { createDb } from "@/lib/database";
 import { revalidatePath } from "next/cache";
 import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { Button } from "./ui/button";
+import { AlertTriangle, Biohazard, Skull, SkullIcon } from "lucide-react";
 
 async function createProduct(formData: FormData) {
   "use server";
@@ -54,16 +67,21 @@ async function resetDatabase(formData: FormData) {
   "use server";
   const db = await createDb();
   await db.query("DELETE FROM product WHERE true;");
+
+  // "sort" is in-place so make a copy
+  const random = [...eggs].sort(() => Math.random() * 2 - 1);
   const sql = `
 INSERT INTO product (name, description, image) VALUES
-${eggs.map(() => "  (?, ?, ?)").join(",\n")};`;
+${random.map(() => "  (?, ?, ?)").join(",\n")};`;
   const values: string[] = [];
-  for (let i = 0; i < eggs.length; i++) {
-    const egg = eggs[i];
+  for (let i = 0; i < random.length; i++) {
+    const egg = random[i];
     values.push(
       egg,
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      `http://ec2-51-20-18-194.eu-north-1.compute.amazonaws.com:3000/eggs/egg-${i}.jpeg`
+      `http://ec2-51-20-18-194.eu-north-1.compute.amazonaws.com:3000/eggs/egg-${eggs.findIndex(
+        (val) => val === egg
+      )}.jpeg`
     );
   }
   // console.log(sql);
@@ -81,44 +99,68 @@ interface CreateProductProps {}
 export async function CreateProduct({}: CreateProductProps) {
   //   const db = await createDb();
   return (
-    <div className="bg-zinc-900 p-6 rounded-md w-full">
-      <div>Create product</div>
-      <form action={createProduct} className="space-y-2">
-        <div>
-          <input
-            className="text-black"
-            name="name"
-            placeholder="Name"
-            required
-            defaultValue="Knäckt Ägg"
-          />
-        </div>
-        <div>
-          <input
-            className="text-black"
-            name="description"
-            placeholder="Description"
-            required
-            defaultValue="Färdig knäckt ägg för hela familjen"
-          />
-        </div>
-        <div>
-          <input
-            className="text-black"
-            name="image"
-            placeholder="Image URL"
-            required
-            defaultValue="https://cdn.discordapp.com/attachments/1171050336878854194/1196441670552662066/p5twx7vv41971.png?ex=65b7a423&is=65a52f23&hm=183b9b1e2ae29a7eba8cf73e6565f5f09970d1be683ca6c4100fed56afc76b80&"
-          />
-        </div>
-        <input className="bg-white text-black py-2 px-4" type="submit" />
-      </form>
+    // <Card className="bg-zinc-900 p-6 rounded-md w-full">
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Create product</CardTitle>
+        <CardDescription>Add more products for us to sell.</CardDescription>
+      </CardHeader>
+      <form action={createProduct}>
+        <CardContent className="space-y-2">
+          <div>
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              name="name"
+              placeholder="Name of the product"
+              required
+              defaultValue={
+                process.env.NODE_ENV === "development" ? "Ägg" : undefined
+              }
+            />
+          </div>
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="Description"
+              required
+              defaultValue={
+                process.env.NODE_ENV === "development"
+                  ? "Färdig knäckt ägg för hela familjen"
+                  : undefined
+              }
+            />
+          </div>
+          <div>
+            <Label htmlFor="image">Image</Label>
+            <Input
+              id="image"
+              name="image"
+              placeholder="Image URL"
+              required
+              defaultValue={
+                process.env.NODE_ENV === "development"
+                  ? "http://ec2-51-20-18-194.eu-north-1.compute.amazonaws.com:3000/eggs/egg-12.jpeg"
+                  : undefined
+              }
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button
+            formAction={resetDatabase}
+            variant="destructive"
+            type="submit"
+          >
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            Reset
+          </Button>
 
-      <form action={resetDatabase} className="space-y-2">
-        <button className="bg-white text-black py-2 px-4" type="submit">
-          Reset
-        </button>
+          <Button type="submit">Create</Button>
+        </CardFooter>
       </form>
-    </div>
+    </Card>
   );
 }

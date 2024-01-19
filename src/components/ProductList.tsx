@@ -2,6 +2,9 @@ import { createDb } from "@/lib/database";
 import { revalidatePath } from "next/cache";
 import React, { useEffect } from "react";
 import { RefreshButton } from "./RefreshButton";
+import Image from "next/image";
+import { Card, CardContent, CardTitle } from "./ui/card";
+import { Skeleton } from "./ui/skeleton";
 
 export async function getProducts() {
   const db = await createDb();
@@ -24,18 +27,36 @@ export async function ProductList({}: ProductListProps) {
 
   return (
     <div>
-      <div className="flex justify-between">
-        <h1 className="text-4xl">Products</h1>
+      <div className="flex justify-between pb-4">
+        <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl">
+          Products
+        </h1>
         <RefreshButton />
       </div>
-      <ul>
+      <ul className="space-y-6">
         {products.map((product) => (
           <li key={product.id}>
-            <div>{product.name}</div>
-            <div className="flex">
-              <img src={product.image} width={96} height={96} />
-              <p>{product.description}</p>
-            </div>
+            <Card className="px-6 py-4">
+              <div className="flex items-center space-x-4">
+                <div className="relative aspect-[3/4] h-32">
+                  {/* Show skeleton loader on images without alpha channel */}
+                  {product.image.endsWith(".jpg") ||
+                  product.image.endsWith(".jpeg") ? (
+                    <Skeleton className="w-full h-full" />
+                  ) : null}
+                  <Image
+                    className="object-cover rounded-lg"
+                    alt={`${product.name} image`}
+                    src={product.image}
+                    fill
+                  />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl">{product.name}</CardTitle>
+                  <p className="line-clamp-4">{product.description}</p>
+                </div>
+              </div>
+            </Card>
           </li>
         ))}
       </ul>
