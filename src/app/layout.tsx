@@ -36,7 +36,7 @@ export default function RootLayout({
   const theme = getClassTheme();
 
   return (
-    <html lang="en" className={theme}>
+    <html lang="en" className={theme ?? "dark"}>
       <body className={inter.className}>
         <header className="max-w-lg w-full mx-auto flex justify-center items-center space-x-4 py-4">
           <Image
