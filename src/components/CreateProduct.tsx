@@ -21,13 +21,58 @@ async function createProduct(formData: FormData) {
   revalidatePath("/");
 }
 
+const eggs: string[] = [
+  "Intergalactical",
+  "Blue",
+  "Gold",
+  "Disco",
+  "Chernobyl",
+  "Fade",
+  "Willys",
+  "Apple",
+  "The Last of Us",
+  "Sir",
+  "Hawaii",
+  "Holy Grail",
+  "Vanilla",
+  "Pre cracked",
+  "Pride",
+  "Black",
+  "Bullet Proof",
+  "Kitsch",
+  "Milkyway",
+  "International",
+  "Delicacy",
+  "Probiotic",
+  "Koh-i-Noor",
+  "Rolex",
+  "Fabergé",
+  "Påsk",
+];
+
 async function resetDatabase(formData: FormData) {
   "use server";
   const db = await createDb();
-  const result = await db.query(`DELETE FROM product WHERE true;`);
+  await db.query("DELETE FROM product WHERE true;");
+  const sql = `
+INSERT INTO product (name, description, image) VALUES
+${eggs.map(() => "  (?, ?, ?)").join(",\n")};`;
+  const values: string[] = [];
+  for (let i = 0; i < eggs.length; i++) {
+    const egg = eggs[i];
+    values.push(
+      egg,
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+      `http://ec2-51-20-18-194.eu-north-1.compute.amazonaws.com:3000/eggs/egg-${i}.jpeg`
+    );
+  }
+  // console.log(sql);
+  // console.log(values);
+  const result = await db.execute(sql, values);
+  // console.log(result);
   db.destroy();
   const value = result[0];
-  console.log(value);
+  // console.log(value);
   revalidatePath("/");
 }
 

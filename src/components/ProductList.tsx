@@ -21,7 +21,6 @@ interface ProductListProps {}
 
 export async function ProductList({}: ProductListProps) {
   const products = await getProducts();
-  console.log(products);
 
   return (
     <div>
