@@ -8,6 +8,5 @@ export function createDb() {
     database: process.env.DB_DATABASE as string,
     password: process.env.DB_PASSWORD as string,
   };
-  console.log(opts);
   return createConnection(opts);
 }

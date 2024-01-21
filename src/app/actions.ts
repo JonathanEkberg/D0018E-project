@@ -58,6 +58,5 @@ ${random.map(() => "  (?, ?, ?)").join(",\n")};`;
     );
   }
   await db.execute(sql, values);
-  db.destroy();
   revalidatePath("/");
 }

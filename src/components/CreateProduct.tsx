@@ -28,7 +28,6 @@ async function createProduct(formData: FormData) {
     `INSERT INTO product (name, description, image) VALUES(?, ?, ?);`,
     values
   );
-  db.destroy();
   const value = result[0];
   console.log(value);
   revalidatePath("/");

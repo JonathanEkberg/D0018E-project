@@ -11,7 +11,6 @@ export async function getProducts() {
   const data = await db.query(
     `SELECT * FROM product ORDER BY created_at DESC LIMIT 10;`
   );
-  db.destroy();
   return data[0] as {
     id: number;
     name: string;

@@ -1,0 +1,11 @@
+.git
+node_modules
+.env
+.env.*
+.next
+next-env.d.ts
+Dockerfile
+.dockerignore
+
+# Served by nginx
+static
