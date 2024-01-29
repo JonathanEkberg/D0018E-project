@@ -1,23 +1,23 @@
-import { createDb } from "@/lib/database";
-import React from "react";
+import { pool } from "@/lib/database";
+import React, { cache } from "react";
 import { RefreshButton } from "./RefreshButton";
 import Image from "next/image";
 import { Card, CardTitle } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 import { Badge } from "./ui/badge";
 
-export async function getProducts() {
-  const db = await createDb();
-  const data = await db.query(
-    `SELECT * FROM product ORDER BY created_at DESC LIMIT 10;`
+export const getProducts = cache(async () => {
+  const data = await pool.execute(
+    `SELECT id, name, description, image FROM product ORDER BY created_at DESC LIMIT 10;`
   );
+
   return data[0] as {
     id: number;
     name: string;
     description: string;
     image: string;
   }[];
-}
+});
 
 interface ProductListProps {}
 

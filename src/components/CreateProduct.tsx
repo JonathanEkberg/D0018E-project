@@ -1,4 +1,4 @@
-import { createDb } from "@/lib/database";
+import { pool } from "@/lib/database";
 import { revalidatePath } from "next/cache";
 import React from "react";
 import {
@@ -23,8 +23,7 @@ async function createProduct(formData: FormData) {
   const values = [name, description, image];
   console.log("Creating product with values:", values);
 
-  const db = await createDb();
-  const result = await db.execute(
+  const result = await pool.execute(
     `INSERT INTO product (name, description, image) VALUES(?, ?, ?);`,
     values
   );

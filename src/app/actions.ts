@@ -1,6 +1,6 @@
 "use server";
 
-import { createDb } from "@/lib/database";
+import { pool } from "@/lib/database";
 import { revalidatePath } from "next/cache";
 
 export async function refreshProducts() {
@@ -38,8 +38,7 @@ const eggs: string[] = [
 
 export async function resetDatabase(formData: FormData) {
   "use server";
-  const db = await createDb();
-  await db.query("DELETE FROM product WHERE true;");
+  await pool.execute("DELETE FROM product WHERE true;");
 
   // "sort" is in-place so make a copy
   const random = [...eggs].sort(() => Math.random() * 2 - 1);
@@ -57,6 +56,6 @@ ${random.map(() => "  (?, ?, ?)").join(",\n")};`;
       )}.jpeg`
     );
   }
-  await db.execute(sql, values);
+  await pool.execute(sql, values);
   revalidatePath("/");
 }
