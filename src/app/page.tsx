@@ -1,7 +1,8 @@
 import { CreateProduct } from "@/components/CreateProduct";
 import { ProductList } from "@/components/ProductList";
+import { Suspense } from "react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 10;
 
 export default async function Home() {
   return (

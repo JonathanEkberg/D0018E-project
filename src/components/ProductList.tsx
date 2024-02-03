@@ -5,24 +5,34 @@ import Image from "next/image";
 import { Card, CardTitle } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 import { Badge } from "./ui/badge";
+import { unstable_cache } from "next/cache";
 
-export const getProducts = cache(async () => {
-  const data = await pool.execute(
-    `SELECT id, name, description, image FROM product ORDER BY created_at DESC LIMIT 10;`
-  );
+export const getProducts = unstable_cache(
+  async () => {
+    const data = await pool.execute(
+      `SELECT id, name, description, image FROM product ORDER BY created_at DESC LIMIT 10;`
+    );
 
-  return data[0] as {
-    id: number;
-    name: string;
-    description: string;
-    image: string;
-  }[];
-});
+    return data[0] as {
+      id: number;
+      name: string;
+      description: string;
+      image: string;
+    }[];
+  },
+  ["products"],
+  { revalidate: 60, tags: ["products"] }
+);
 
 interface ProductListProps {}
 
 export async function ProductList({}: ProductListProps) {
+  const start = performance.now();
   const products = await getProducts();
+  const time = performance.now() - start;
+  if (time < 1) {
+    console.log("Products cached");
+  }
 
   return (
     <div>

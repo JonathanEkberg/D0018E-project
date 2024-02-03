@@ -6,6 +6,10 @@ node_modules
 next-env.d.ts
 Dockerfile
 .dockerignore
-
-# Served by nginx
-static
+.eslintrc.json
+.gitignore
+database.sql
+default.vcl
+nginx.conf
+README.md
+.vscode

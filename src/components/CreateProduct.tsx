@@ -1,5 +1,5 @@
 import { pool } from "@/lib/database";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import React from "react";
 import {
   Card,
@@ -29,6 +29,7 @@ async function createProduct(formData: FormData) {
   );
   const value = result[0];
   console.log(value);
+  revalidateTag("products");
   revalidatePath("/");
 }
 
