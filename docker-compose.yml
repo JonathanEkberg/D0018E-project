@@ -1,13 +1,29 @@
 version: "3.8"
 
 services:
+  # certbot:
+  #   image: certbot/certbot
+  #   container_name: certbot
+  #   volumes:
+  #     - ./certbot/etc:/etc/letsencrypt
+  #     - ./certbot/var:/var/lib/letsencrypt
+  #     - ./certbot/html:/var/www/html
+  #   depends_on:
+  #     - proxy
+  #   command: certonly --webroot --webroot-path=/var/www/html --email info@aistudybuddy.se --agree-tos --staging -d d0018e.aistudybuddy.se
+  #   # command: certonly --webroot --webroot-path=/var/www/html --email info@aistudybuddy.se --force-renewal --agree-tos -d d0018e.aistudybuddy.se
   proxy:
     container_name: store-proxy
-    image: nginx:1.25.3
+    image: macbre/nginx-http3:latest
     ports:
-      - 8081:80
+      - 80:80
+      - 443:443
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/etc:/etc/letsencrypt
+      - ./certbot/var:/var/lib/letsencrypt
+      - ./certbot/html:/var/www/html
+      - ./dhparam:/etc/ssl/certs
     networks:
       - d0018e
     depends_on:
@@ -31,15 +47,14 @@ services:
     build:
       dockerfile: ./Dockerfile
       context: .
-    env_file:
-      - .env.local
+    env_file: .env.local
     depends_on:
       - db
     networks:
       - d0018e
     # Port not exposed as it is proxied through nginx
-    # ports:
-    #   - "3000:3000"
+    ports:
+      - "3000:3000"
   db:
     container_name: store-db
     image: mysql:5.7

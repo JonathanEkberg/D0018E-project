@@ -1,7 +1,7 @@
 "use server";
 
 import { pool } from "@/lib/database";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function refreshProducts() {
   revalidatePath("/");
@@ -51,11 +51,12 @@ ${random.map(() => "  (?, ?, ?)").join(",\n")};`;
     values.push(
       egg,
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-      `http://ec2-51-20-18-194.eu-north-1.compute.amazonaws.com/eggs/egg-${eggs.findIndex(
+      `https://d0018e.aistudybuddy.se/eggs/egg-${eggs.findIndex(
         (val) => val === egg
       )}.jpeg`
     );
   }
   await pool.execute(sql, values);
+  revalidateTag("products");
   revalidatePath("/");
 }

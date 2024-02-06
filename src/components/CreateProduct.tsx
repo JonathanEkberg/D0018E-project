@@ -35,7 +35,7 @@ async function createProduct(formData: FormData) {
 
 interface CreateProductProps {}
 
-export async function CreateProduct({}: CreateProductProps) {
+export function CreateProduct({}: CreateProductProps) {
   //   const db = await createDb();
   return (
     // <Card className="bg-zinc-900 p-6 rounded-md w-full">

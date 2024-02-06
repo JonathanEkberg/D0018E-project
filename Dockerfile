@@ -1,23 +1,30 @@
 FROM node:alpine as base
 
+
 ARG MODEL_PATH
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
-RUN npm i -g pnpm
 
 #################################
 
-FROM base as runner
+FROM base as builder
+WORKDIR /app
+RUN npm i -g pnpm
 
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm i --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 RUN pnpm build
 
-ENV PORT=3000
-ENV HOSTNAME=127.0.0.1
-CMD ["pnpm", "next", "start", "-p", "3000"]
+#################################
+FROM base as runner
+WORKDIR /app
+
+COPY --from=builder /app/.next/standalone .
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+CMD ["node", "server.js", "-p", "3000"]

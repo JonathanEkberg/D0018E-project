@@ -21,18 +21,13 @@ export const getProducts = unstable_cache(
     }[];
   },
   ["products"],
-  { revalidate: 60, tags: ["products"] }
+  { tags: ["products"] }
 );
 
 interface ProductListProps {}
 
 export async function ProductList({}: ProductListProps) {
-  const start = performance.now();
   const products = await getProducts();
-  const time = performance.now() - start;
-  if (time < 1) {
-    console.log("Products cached");
-  }
 
   return (
     <div>
