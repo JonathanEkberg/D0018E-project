@@ -6,6 +6,8 @@ import { Card, CardTitle } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 import { Badge } from "./ui/badge";
 import { unstable_cache } from "next/cache";
+import Link from "next/link";
+import { Button } from "./ui/button";
 
 export const getProducts = unstable_cache(
   async () => {
@@ -64,6 +66,9 @@ export async function ProductList({}: ProductListProps) {
                     {product.description}
                   </p>
                 </div>
+                <Link href={`/products/${product.id}`}>
+                  <Button>View</Button>
+                </Link>
               </div>
             </Card>
           </li>

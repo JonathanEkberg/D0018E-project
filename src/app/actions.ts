@@ -1,10 +1,50 @@
 "use server";
 
 import { pool } from "@/lib/database";
+import { getUser } from "@/lib/user";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { cookies } from "next/headers";
 
 export async function refreshProducts() {
   revalidatePath("/");
+}
+
+export async function addToCartAction(formData: FormData) {
+  const productId = formData.get("productId");
+
+  if (!productId) {
+    throw new Error("Missing product id");
+  }
+
+  const user = getUser();
+
+  if (!user) {
+    throw new Error("You must be logged in to add to cart!");
+  }
+
+  // 1. Check if product exists
+  const data = await pool.execute("SELECT id FROM product WHERE id=?", [
+    productId,
+  ]);
+
+  const id = data[0] as [{ id: number }] | [];
+
+  if (!id) {
+    throw new Error("Could not find product");
+  }
+
+  // 2. Create shopping cart item for user
+
+  pool.execute(
+    "INSERT INTO shopping_cart_item (user_id, product_id) VALUES (?, ?)",
+    [user.id, productId]
+  );
+}
+
+export async function logoutAction(formData: FormData) {
+  "use server";
+  cookies().delete("u_id");
+  cookies().delete("u_name");
 }
 
 const eggs: string[] = [

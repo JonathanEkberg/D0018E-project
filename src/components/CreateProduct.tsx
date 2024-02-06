@@ -13,7 +13,6 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { ResetProductsButton } from "./ResetProductsButton";
 
 async function createProduct(formData: FormData) {
   "use server";
@@ -37,6 +36,7 @@ interface CreateProductProps {}
 
 export function CreateProduct({}: CreateProductProps) {
   //   const db = await createDb();
+  return <div></div>;
   return (
     // <Card className="bg-zinc-900 p-6 rounded-md w-full">
     <Card className="w-full">
@@ -81,15 +81,13 @@ export function CreateProduct({}: CreateProductProps) {
               required
               defaultValue={
                 process.env.NODE_ENV === "development"
-                  ? "http://ec2-51-20-18-194.eu-north-1.compute.amazonaws.com:3000/eggs/egg-12.jpeg"
+                  ? "https://d0018e.aistudybuddy.se/eggs/egg-12.jpeg"
                   : undefined
               }
             />
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <ResetProductsButton />
-
           <Button type="submit">Create</Button>
         </CardFooter>
       </form>

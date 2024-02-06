@@ -15,14 +15,14 @@ const opts: ConnectionOptions = {
   keepAliveInitialDelay: 0,
 };
 
-console.log()
-console.log()
-console.log("################################")
-console.log("OPTIONS:")
-console.log(opts)
-console.log("################################")
-console.log()
-console.log()
+// console.log()
+// console.log()
+// console.log("################################")
+// console.log("OPTIONS:")
+// console.log(opts)
+// console.log("################################")
+// console.log()
+// console.log()
 
 declare global {
   var pool: Pool | undefined;

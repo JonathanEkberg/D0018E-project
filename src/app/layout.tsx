@@ -2,6 +2,12 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { cookies } from "next/headers";
+import { UserButton } from "@/components/UserButton";
+import { ShoppingBasket } from "lucide-react";
+import { ShoppingCartIcon } from "@/components/ShoppingCartIcon";
 // import { headers } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -14,21 +20,20 @@ export const metadata: Metadata = {
 // function getClassTheme(): "dark" | undefined {
 //   const HEADER_NAME = "Sec-Ch-Prefers-Color-Scheme";
 //   const headersList = headers();
-// 
+//
 //   if (!headersList.has(HEADER_NAME)) {
 //     return undefined;
 //   }
-// 
+//
 //   const value = headersList.get(HEADER_NAME)!;
-// 
+//
 //   if (value === "dark") {
 //     return value;
 //   }
-// 
 //   return undefined;
 // }
 
-export const dynamic = "force-static"
+// export const dynamic = "force-static";
 
 export default function RootLayout({
   children,
@@ -36,21 +41,44 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   // const theme = getClassTheme();
+  const [uid, name] = [cookies().get("u_id"), cookies().get("u_name")];
+  // console.log(uid);
+  // const s = pool
 
   return (
     <html lang="en" className="dark">
+      {/* <html lang="en"> */}
       <body className={inter.className}>
-        <header className="max-w-lg w-full mx-auto flex justify-center items-center space-x-4 py-4">
-          <Image
-            loading="eager"
-            src="/logo.png"
-            alt="Egg store logo"
-            width={64}
-            height={64}
-          />
-          <h1 className="text-5xl font-bold tracking-tighter">Egg store</h1>
+        <header className="max-w-xl w-full mx-auto flex justify-between items-center py-4">
+          <Link href="/" className="flex items-center space-x-4">
+            <Image
+              loading="eager"
+              src="/logo.png"
+              alt="Egg store logo"
+              width={64}
+              height={64}
+            />
+            <h1 className="text-5xl font-bold tracking-tighter">Egg store</h1>
+          </Link>
+          {uid === undefined ? (
+            <div className="space-x-2">
+              <Link href="/auth/login">
+                <Button>Log in</Button>
+              </Link>
+              <Link href="/auth/signup">
+                <Button>Sign up</Button>
+              </Link>
+            </div>
+          ) : (
+            name && (
+              <div className="space-x-2 flex items-center">
+                <UserButton name={name.value} />
+                <ShoppingCartIcon />
+              </div>
+            )
+          )}
         </header>
-			  {children}
+        {children}
       </body>
     </html>
   );

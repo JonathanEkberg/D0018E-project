@@ -60,7 +60,7 @@
   `product_id` integer
 );
 
-ALTER TABLE `user` ADD FOREIGN KEY (`id`) REFERENCES `shopping_cart` (`user_id`);
+ALTER TABLE `shopping_cart` ADD FOREIGN KEY (`user_id`) REFERENCES `user` (`id`);
 
 ALTER TABLE `shopping_cart_item` ADD FOREIGN KEY (`shopping_cart_id`) REFERENCES `shopping_cart` (`id`);
 
