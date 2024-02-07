@@ -51,8 +51,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (product === undefined) {
     notFound();
   }
-  const user = getUser();
-
   return (
     <div className="max-w-xl mx-auto space-y-4">
       <div className="flex items-center space-x-4">

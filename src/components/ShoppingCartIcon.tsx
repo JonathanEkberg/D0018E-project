@@ -7,12 +7,10 @@ import { ShoppingBasket } from "lucide-react";
 
 async function getShoppingCartCount(userId: number) {
   const query = await pool.execute(
-    `SELECT count(*) c FROM shopping_cart_item WHERE shopping_cart_item.user_id = ?;`,
+    "SELECT SUM(amount) as sum FROM shopping_cart_item WHERE user_id=?",
     [userId]
   );
-  //   query[0];
-  //   return (query[0] as [{}])[0];
-  return (query[0] as [{ c: number }])[0].c;
+  return (query[0] as [{ sum: number }])[0].sum;
 }
 
 interface ShoppingCartIconProps {}

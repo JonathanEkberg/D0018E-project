@@ -33,12 +33,11 @@ export async function addToCartAction(formData: FormData) {
     throw new Error("Could not find product");
   }
 
-  // 2. Create shopping cart item for user
-
-  pool.execute(
-    "INSERT INTO shopping_cart_item (user_id, product_id) VALUES (?, ?)",
+  await pool.execute(
+    `INSERT INTO shopping_cart_item (user_id, product_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE amount = amount + 1;`,
     [user.id, productId]
   );
+  revalidatePath(`/products/${productId}`);
 }
 
 export async function logoutAction(formData: FormData) {
