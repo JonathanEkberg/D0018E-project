@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { getUser } from "@/lib/user";
 import { ShoppingBasket } from "lucide-react";
+import clsx from "clsx";
 
 async function getShoppingCartCount(userId: number) {
   const query = await pool.execute(
@@ -23,7 +24,6 @@ export async function ShoppingCartIcon({}: ShoppingCartIconProps) {
   }
 
   const count = await getShoppingCartCount(user.id);
-  console.log(":COUNT", count);
 
   return (
     <Link href={`/cart`} className="relative">
@@ -32,8 +32,17 @@ export async function ShoppingCartIcon({}: ShoppingCartIconProps) {
       </Button>
 
       {count !== 0 && (
-        <div className="absolute -top-3 -right-3 bg-black rounded-full min-w-6 min-h-6 text-center p-0.5 font-bold">
-          {count}
+        <div
+          className={clsx(
+            "absolute -top-3 -right-3 bg-card border rounded-full min-w-6 text-sm shadow-sm min-h-6 text-center p-0.5 font-bold",
+            count > 99
+              ? "px-2 -right-6 -top-4"
+              : count > 9
+              ? "px-2 -right-5 -top-4"
+              : undefined
+          )}
+        >
+          {count > 99 ? "99+" : count}
         </div>
       )}
     </Link>

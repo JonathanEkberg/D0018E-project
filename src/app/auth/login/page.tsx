@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export async function loginAction(formData: FormData) {
   "use server";
@@ -44,37 +45,46 @@ interface LoginPageProps {}
 
 export default function LoginPage({}: LoginPageProps) {
   return (
-    <div className="grid place-items-center">
-      <form action={loginAction} className="space-y-4">
-        <div className="space-y-2">
-          <div>
-            <Label>Email</Label>
-            <Input
-              name="email"
-              type="email"
-              required
-              defaultValue={
-                process.env.NODE_ENV === "development"
-                  ? "john@doe.com"
-                  : undefined
-              }
-            />
-          </div>
-          <div>
-            <Label>Password</Label>
-            <Input
-              name="password"
-              type="password"
-              required
-              min={6}
-              defaultValue={
-                process.env.NODE_ENV === "development" ? "johndoe" : undefined
-              }
-            />
-          </div>
-        </div>
-        <Button type="submit">Login</Button>
-      </form>
+    <div className="grid place-items-center h-full">
+      <Card>
+        <CardHeader>
+          <CardTitle>Login</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form action={loginAction} className="space-y-4">
+            <div className="space-y-2">
+              <div>
+                <Label>Email</Label>
+                <Input
+                  name="email"
+                  type="email"
+                  required
+                  defaultValue={
+                    process.env.NODE_ENV === "development"
+                      ? "john@doe.com"
+                      : undefined
+                  }
+                />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <Input
+                  name="password"
+                  type="password"
+                  required
+                  min={6}
+                  defaultValue={
+                    process.env.NODE_ENV === "development"
+                      ? "johndoe"
+                      : undefined
+                  }
+                />
+              </div>
+            </div>
+            <Button type="submit">Login</Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

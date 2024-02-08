@@ -38,12 +38,84 @@ export async function addToCartAction(formData: FormData) {
     [user.id, productId]
   );
   revalidatePath(`/products/${productId}`);
+  revalidateTag("cart-items");
 }
 
-export async function logoutAction(formData: FormData) {
+export async function updateCartItemAmountAction(formData: FormData) {
+  const user = getUser();
+
+  if (!user) {
+    throw new Error("You must be logged in!");
+  }
+
+  const [cartItemId, direction] = [
+    formData.get("sciId"),
+    formData.get("direction"),
+  ];
+
+  console.log(cartItemId, direction);
+  if (!cartItemId || !direction) {
+    throw new Error("Failed to update");
+  }
+
+  const sciId = parseInt(cartItemId.toString());
+
+  if (!Number.isSafeInteger(sciId)) {
+    throw new Error("Invalid shopping cart item ID");
+  }
+
+  // 1. Check if cart item exists
+  const data = await pool.execute(
+    "SELECT id FROM shopping_cart_item WHERE id=?",
+    [sciId]
+  );
+
+  const id = data[0] as [{ id: number }] | [];
+
+  if (!id[0]?.id) {
+    throw new Error("Could not find product");
+  }
+
+  await pool.execute(
+    `UPDATE shopping_cart_item SET amount = amount ${
+      direction === "+" ? "+" : "-"
+    } 1 WHERE id = ?;`,
+    [id[0].id]
+  );
+  revalidateTag("cart-items");
+}
+
+export async function removeCartItemAction(formData: FormData) {
+  const user = getUser();
+
+  if (!user) {
+    throw new Error("You must be logged in!");
+  }
+
+  const cartItemId = formData.get("sciId");
+
+  if (!cartItemId) {
+    throw new Error("Failed to update");
+  }
+
+  const sciId = parseInt(cartItemId.toString());
+
+  if (!Number.isSafeInteger(sciId)) {
+    throw new Error("Invalid shopping cart item ID");
+  }
+
+  // 1. Check if cart item exists
+  await pool
+    .execute("DELETE FROM shopping_cart_item WHERE id=?", [sciId])
+    .catch((e) => {});
+  revalidateTag("cart-items");
+}
+
+export async function logoutAction() {
   "use server";
   cookies().delete("u_id");
   cookies().delete("u_name");
+  revalidatePath("/");
 }
 
 const eggs: string[] = [

@@ -4,10 +4,11 @@ import "./globals.css";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { UserButton } from "@/components/UserButton";
 import { ShoppingBasket } from "lucide-react";
 import { ShoppingCartIcon } from "@/components/ShoppingCartIcon";
+import { Toaster } from "@/components/ui/sonner";
 // import { headers } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -20,20 +21,18 @@ export const metadata: Metadata = {
 // function getClassTheme(): "dark" | undefined {
 //   const HEADER_NAME = "Sec-Ch-Prefers-Color-Scheme";
 //   const headersList = headers();
-//
+
 //   if (!headersList.has(HEADER_NAME)) {
 //     return undefined;
 //   }
-//
+
 //   const value = headersList.get(HEADER_NAME)!;
-//
+
 //   if (value === "dark") {
 //     return value;
 //   }
 //   return undefined;
 // }
-
-// export const dynamic = "force-static";
 
 export default function RootLayout({
   children,
@@ -46,19 +45,20 @@ export default function RootLayout({
   // const s = pool
 
   return (
+    // <html lang="en" className={theme}>
     <html lang="en" className="dark">
       {/* <html lang="en"> */}
       <body className={inter.className}>
-        <header className="max-w-xl w-full mx-auto flex justify-between items-center py-4">
+        <header className="max-w-4xl w-full mx-auto flex justify-between items-center py-4">
           <Link href="/" className="flex items-center space-x-4">
             <Image
               loading="eager"
               src="/logo.png"
               alt="Egg store logo"
               width={64}
-              height={64}
+              height={77.5}
             />
-            <h1 className="text-5xl font-bold tracking-tighter">Egg store</h1>
+            <h1 className="text-4xl font-bold tracking-tighter">Egg store</h1>
           </Link>
           {uid === undefined ? (
             <div className="space-x-2">
@@ -71,7 +71,7 @@ export default function RootLayout({
             </div>
           ) : (
             name && (
-              <div className="space-x-2 flex items-center">
+              <div className="space-x-4 flex items-center">
                 <UserButton name={name.value} />
                 <ShoppingCartIcon />
               </div>
@@ -79,6 +79,7 @@ export default function RootLayout({
           )}
         </header>
         {children}
+        <Toaster />
       </body>
     </html>
   );
