@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export async function loginAction(formData: FormData) {
+async function loginAction(formData: FormData) {
   "use server";
   const [email, password] = [formData.get("email"), formData.get("password")];
 

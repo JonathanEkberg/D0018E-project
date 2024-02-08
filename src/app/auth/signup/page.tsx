@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
 
-export async function signupAction(formData: FormData) {
+async function signupAction(formData: FormData) {
   "use server";
   const [name, email, password] = [
     formData.get("name"),
