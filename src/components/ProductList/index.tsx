@@ -9,6 +9,8 @@ import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { ProductListContent, ProductListContentLoading } from "./content";
+import { getUser } from "@/lib/user";
+import { PlusIcon } from "lucide-react";
 
 // export const getProducts = unstable_cache(
 export const getProducts = async () => {
@@ -32,13 +34,24 @@ export const getProducts = async () => {
 interface ProductListProps {}
 
 export async function ProductList({}: ProductListProps) {
+  const user = getUser();
   return (
     <div className="w-full">
       <div className="flex justify-between pb-4 px-2">
         <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">
           Products
         </h2>
-        <RefreshButton />
+        <div className="flex space-x-2">
+          <RefreshButton />
+          {user?.role === "ADMIN" && (
+            <Button asChild variant="secondary">
+              <Link href="/admin/create-product">
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Create
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
       <Suspense fallback={<ProductListContentLoading />}>
         <ProductListContent />

@@ -4,9 +4,7 @@ import { getUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Trash } from "lucide-react";
 import { unstable_cache } from "next/cache";
 import {
   Table,
@@ -19,12 +17,13 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { removeCartItemAction, updateCartItemAmountAction } from "../actions";
+import { purchaseAction, removeCartItemAction } from "../actions";
+import { CartItemAmount } from "@/components/Cart/CartItemAmount";
+import { DollarFormatter } from "@/components/DollarFormatter";
 
 const getShoppingCartItems = unstable_cache(
   async (userId: number) => {
@@ -51,13 +50,28 @@ WHERE sci.user_id = ?;`,
   { tags: ["cart-items"] }
 );
 
-const formatter = new Intl.NumberFormat("en-US", {
-  style: "decimal",
-  currency: "USD",
-  // unit: "1000",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-});
+const getShoppingCartTotal = unstable_cache(
+  async (userId: number) => {
+    const data = await pool.execute(
+      `SELECT
+SUM(sci.amount * p.price_usd) as total_price
+FROM shopping_cart_item sci
+INNER JOIN product p ON p.id = sci.product_id
+WHERE sci.user_id = ?;`,
+      [userId]
+    );
+
+    return (
+      data[0] as [
+        {
+          total_price: number;
+        }
+      ]
+    )[0].total_price;
+  },
+  ["cart-total"],
+  { tags: ["cart-total"], revalidate: 60 }
+);
 
 interface CartPageProps {}
 
@@ -67,7 +81,11 @@ export default async function CartPage({}: CartPageProps) {
   if (!user) {
     redirect("/");
   }
-  const items = await getShoppingCartItems(user.id);
+
+  const [items, total] = await Promise.all([
+    getShoppingCartItems(user.id),
+    getShoppingCartTotal(user.id),
+  ]);
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -102,60 +120,20 @@ export default async function CartPage({}: CartPageProps) {
                   </TableCell>
 
                   <TableCell className="font-medium text-center">
-                    <span className="text-muted-foreground">&#36;</span>
-                    {formatter.format(item.p_price_usd ?? 0)}
+                    <DollarFormatter value={item.p_price_usd ?? 0} />
                   </TableCell>
 
                   <TableCell className="font-medium text-center">
-                    <div className="flex justify-center items-center space-x-1">
-                      <div className="flex flex-col space-y-3">
-                        <form action={updateCartItemAmountAction}>
-                          <input
-                            type="number"
-                            name="sciId"
-                            value={item.sci_id}
-                            readOnly
-                            hidden
-                          />
-                          <input name="direction" value="+" readOnly hidden />
-                          <Button
-                            disabled={item.sci_amount > 100_000}
-                            variant="secondary"
-                            size="icon"
-                            className="w-6 h-6"
-                          >
-                            <Plus size={12} />
-                          </Button>
-                        </form>
-                        <div>{item.sci_amount}</div>
-                        <form action={updateCartItemAmountAction}>
-                          <input
-                            readOnly
-                            hidden
-                            type="number"
-                            name="sciId"
-                            value={item.sci_id}
-                          />
-                          <input readOnly hidden name="direction" value="-" />
-                          <Button
-                            disabled={item.sci_amount <= 1}
-                            type="submit"
-                            variant="secondary"
-                            size="icon"
-                            className="w-6 h-6"
-                          >
-                            <Minus size={12} />
-                          </Button>
-                        </form>
-                      </div>
-                    </div>
+                    <CartItemAmount
+                      sciId={item.sci_id}
+                      defaultAmount={item.sci_amount}
+                    />
                   </TableCell>
 
                   <TableCell className="font-medium text-center">
-                    <span className="text-muted-foreground">&#36;</span>
-                    {formatter.format(
-                      item.sci_amount * (item.p_price_usd ?? 0)
-                    )}
+                    <DollarFormatter
+                      value={item.sci_amount * (item.p_price_usd ?? 0)}
+                    />
                   </TableCell>
 
                   <TableCell className="text-right">
@@ -181,55 +159,23 @@ export default async function CartPage({}: CartPageProps) {
             </TableBody>
           </Table>
         </CardContent>
+
         <CardFooter className="w-full flex justify-between">
-          <div>Total: ?</div>
-          <Button variant="default">Purchase</Button>
+          <div className="text-xl">
+            <span className="text-muted-foreground">Total:</span>{" "}
+            <DollarFormatter className="font-medium" value={total} />
+          </div>
+          <form action={purchaseAction}>
+            <Button
+              type="submit"
+              variant="default"
+              disabled={items.length === 0}
+            >
+              Purchase
+            </Button>
+          </form>
         </CardFooter>
       </Card>
-      {/* <ul className="space-y-2">
-        {items.map((item) => (
-          <li key={item.sci_id}>
-            <div className="flex items-center space-x-4">
-              <Image
-                src={item.p_image}
-                alt={`${item.p_name} image`}
-                width={96}
-                height={96}
-              />
-              <div className="flex-grow flex">
-                <div className="flex-grow">
-                  <div className="text-2xl font-bold tracking-tight flex-grow">
-                    {item.p_name}
-                  </div>
-                  {item.p_price_usd !== null ? (
-                    <div className="textl-2xl text-muted-foreground flex-grow">
-                      {`$${item.p_price_usd}`}
-                    </div>
-                  ) : null}
-                </div>
-                <div>
-                  <Label>Amount</Label>
-                  <Input
-                    className="w-20"
-                    type="number"
-                    value={item.sci_amount}
-                  />
-                </div>
-              </div>
-              <div className="w-24">
-                <div>Total:</div>
-                <div>${item.sci_amount * (item.p_price_usd ?? 0)}</div>
-              </div>
-              <form>
-                <Button size="icon">
-                  <Trash size={20} />
-                </Button>
-              </form>
-            </div>
-          </li>
-        ))}
-      </ul> */}
-      {/* <div className="mt-8">{JSON.stringify(items, undefined, 4)}</div> */}
     </div>
   );
 }

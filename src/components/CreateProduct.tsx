@@ -13,30 +13,32 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
+import { redirect } from "next/navigation";
 
 async function createProduct(formData: FormData) {
   "use server";
   const name = formData.get("name")!.toString();
   const description = formData.get("description")!.toString();
   const image = formData.get("image")!.toString();
-  const values = [name, description, image];
+  const price = formData.get("price_usd")!.toString();
+  const stock = formData.get("stock")!.toString();
+  const values = [name, description, image, price, stock];
   console.log("Creating product with values:", values);
 
   const result = await pool.execute(
-    `INSERT INTO product (name, description, image) VALUES(?, ?, ?);`,
+    `INSERT INTO product (name, description, image, price_usd, stock) VALUES(?, ?, ?, ?, ?);`,
     values
   );
   const value = result[0];
   console.log(value);
   revalidateTag("products");
   revalidatePath("/");
+  redirect("/");
 }
 
 interface CreateProductProps {}
 
 export function CreateProduct({}: CreateProductProps) {
-  //   const db = await createDb();
-  return <div></div>;
   return (
     // <Card className="bg-zinc-900 p-6 rounded-md w-full">
     <Card className="w-full">
@@ -85,6 +87,34 @@ export function CreateProduct({}: CreateProductProps) {
                   : undefined
               }
             />
+          </div>
+          <div className="flex space-x-4">
+            <div className="flex-1">
+              <Label htmlFor="price_usd">Price</Label>
+              <Input
+                id="price_usd"
+                name="price_usd"
+                placeholder="Price in USD"
+                required
+                type="number"
+                defaultValue={
+                  process.env.NODE_ENV === "development" ? 8 : undefined
+                }
+              />
+            </div>
+            <div className="flex-1">
+              <Label htmlFor="stock">Stock</Label>
+              <Input
+                id="stock"
+                name="stock"
+                placeholder="Stock"
+                required
+                type="number"
+                defaultValue={
+                  process.env.NODE_ENV === "development" ? 123 : undefined
+                }
+              />
+            </div>
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">

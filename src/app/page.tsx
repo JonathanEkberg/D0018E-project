@@ -8,7 +8,7 @@ export const revalidate = 3600;
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen max-w-2xl flex-col items-center justify-between p-8 mx-auto">
+    <main className="flex min-h-screen w-full max-w-2xl flex-col items-center justify-between p-8 mx-auto">
       <ProductList />
     </main>
   );

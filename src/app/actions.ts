@@ -4,9 +4,131 @@ import { pool } from "@/lib/database";
 import { getUser } from "@/lib/user";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export async function refreshProducts() {
   revalidatePath("/");
+}
+
+export async function makeReviewAction(formData: FormData) {
+  const user = getUser();
+
+  if (!user) {
+    throw new Error("You must be logged in to remove a order!");
+  }
+
+  const [review, stars, productId] = [
+    formData.get("review"),
+    formData.get("stars"),
+    formData.get("productId"),
+  ];
+
+  // 1. Get shopping cart items
+  await pool.execute(
+    `INSERT INTO \`review\` (text, stars, product_id, user_id) VALUES (?, ?, ?, ?);`,
+    [
+      review,
+      parseInt(stars!.toString()),
+      parseInt(productId!.toString()),
+      user.id,
+    ]
+  );
+
+  revalidateTag("product-id");
+  revalidatePath(`/product/${productId}`);
+}
+
+export async function deleteOrderAction(formData: FormData) {
+  const user = getUser();
+
+  if (!user) {
+    throw new Error("You must be logged in to remove a order!");
+  }
+
+  const orderId = formData.get("orderId");
+
+  // 1. Get shopping cart items
+  await pool.execute(`DELETE FROM \`order\` WHERE id = ?`, [orderId]);
+
+  revalidateTag("orders");
+  revalidateTag("cart-total");
+  revalidateTag("cart-items");
+  revalidatePath(`/orders`);
+}
+
+export async function purchaseAction() {
+  const user = getUser();
+
+  if (!user) {
+    throw new Error("You must be logged in to add to cart!");
+  }
+
+  // await pool.beginTransaction();
+  const conn = await pool.getConnection();
+
+  await conn.beginTransaction();
+
+  // 1. Get shopping cart items
+  const itemsQuery = await conn.execute(
+    `SELECT sci.id, product_id, user_id, amount, stock, SUM(amount * price_usd) as real_price
+    FROM shopping_cart_item sci
+    INNER JOIN product ON sci.product_id = product.id
+    WHERE sci.user_id = ? 
+    GROUP BY sci.id;`,
+    [user.id]
+  );
+  const items = itemsQuery[0] as {
+    id: number;
+    product_id: number;
+    user_id: number;
+    amount: number;
+    stock: number;
+    real_price: number;
+  }[];
+
+  if (items.length === 0) {
+    return;
+  }
+
+  for (const item of items) {
+    // Ordering more than in stock
+    if (item.amount > item.stock) {
+      await conn.rollback();
+      throw new Error("You cannot order more items than we have in stock.");
+    }
+  }
+
+  await conn.execute(`INSERT INTO \`order\` (user_id) VALUES (?);`, [user.id]);
+  const orderQuery = await conn.execute(
+    `SELECT id from \`order\` WHERE user_id = ? ORDER BY created_at DESC;`,
+    [user.id]
+  );
+
+  const order = orderQuery[0] as [
+    {
+      id: number;
+    }
+  ];
+  console.log(orderQuery[0]);
+
+  // 2. Get each item product and the prices
+  for (const item of items) {
+    await conn.execute(
+      `INSERT INTO order_item (order_id, product_id, price_usd, amount) VALUES (?, ?, ?, ?);`,
+      [order[0].id, item.product_id, item.real_price, item.amount]
+    );
+  }
+
+  await conn.execute(`DELETE FROM shopping_cart_item WHERE user_id = ?;`, [
+    user.id,
+  ]);
+
+  await conn.commit();
+  revalidateTag("orders");
+  revalidateTag("cart-total");
+  revalidateTag("cart-items");
+  revalidatePath(`/orders`);
+  redirect("/orders");
 }
 
 export async function addToCartAction(formData: FormData) {
@@ -39,6 +161,7 @@ export async function addToCartAction(formData: FormData) {
   );
   revalidatePath(`/products/${productId}`);
   revalidateTag("cart-items");
+  revalidateTag("cart-total");
 }
 
 export async function updateCartItemAmountAction(formData: FormData) {
@@ -83,6 +206,53 @@ export async function updateCartItemAmountAction(formData: FormData) {
     [id[0].id]
   );
   revalidateTag("cart-items");
+  revalidateTag("cart-total");
+}
+
+export async function updateCartItemSpecificAmountAction(formData: FormData) {
+  const user = getUser();
+
+  if (!user) {
+    throw new Error("You must be logged in!");
+  }
+
+  const [unsafeCartItemId, unsafeAmount] = [
+    formData.get("sciId"),
+    formData.get("amount"),
+  ];
+
+  if (!unsafeCartItemId || unsafeAmount === null) {
+    throw new Error("Failed to update");
+  }
+
+  const sciId = parseInt(unsafeCartItemId.toString());
+  const amount = parseInt(unsafeAmount.toString());
+
+  if (!Number.isSafeInteger(sciId) || sciId < 0) {
+    throw new Error("Invalid shopping cart item ID");
+  }
+
+  if (!Number.isSafeInteger(amount) || amount < 0) {
+    throw new Error("Amount must be a valid integer greater than zero.");
+  }
+
+  const data = await pool.execute(
+    "SELECT id FROM shopping_cart_item WHERE id=?",
+    [sciId]
+  );
+
+  const id = data[0] as [{ id: number }] | [];
+
+  if (!id[0]?.id) {
+    throw new Error("Could not find cart item.");
+  }
+
+  await pool.execute(`UPDATE shopping_cart_item SET amount = ? WHERE id = ?;`, [
+    amount,
+    id[0].id,
+  ]);
+  revalidateTag("cart-items");
+  revalidateTag("cart-total");
 }
 
 export async function removeCartItemAction(formData: FormData) {
@@ -108,13 +278,14 @@ export async function removeCartItemAction(formData: FormData) {
   await pool
     .execute("DELETE FROM shopping_cart_item WHERE id=?", [sciId])
     .catch((e) => {});
-  revalidateTag("cart-items");
+  revalidateTag("cart-total");
 }
 
 export async function logoutAction() {
   "use server";
   cookies().delete("u_id");
   cookies().delete("u_name");
+  cookies().delete("u_role");
   revalidatePath("/");
 }
 

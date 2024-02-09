@@ -31,7 +31,7 @@ export async function ShoppingCartIcon({}: ShoppingCartIconProps) {
         <ShoppingBasket />
       </Button>
 
-      {count !== 0 && (
+      {count > 0 && (
         <div
           className={clsx(
             "absolute -top-3 -right-3 bg-card border rounded-full min-w-6 text-sm shadow-sm min-h-6 text-center p-0.5 font-bold",

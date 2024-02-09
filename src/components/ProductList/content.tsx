@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "../ui/badge";
 import { unstable_cache } from "next/cache";
+import { getUser } from "@/lib/user";
 
 export const getProducts = unstable_cache(
   async () => {
@@ -28,6 +29,7 @@ export const getProducts = unstable_cache(
 interface ProductListContentProps {}
 
 export async function ProductListContent({}: ProductListContentProps) {
+  const user = getUser();
   const products = await getProducts();
 
   return (
@@ -60,9 +62,16 @@ export async function ProductListContent({}: ProductListContentProps) {
                   </p>
                 </div>
               </div>
-              <Link href={`/products/${product.id}`}>
-                <Button>View</Button>
-              </Link>
+              <div className="flex flex-col items-center space-y-4">
+                <Button className="w-full" asChild>
+                  <Link href={`/products/${product.id}`}>View</Link>
+                </Button>
+                {user?.role === "ADMIN" && (
+                  <Button variant="secondary" className="w-full" asChild>
+                    <Link href={`/admin/edit-product/${product.id}`}>Edit</Link>
+                  </Button>
+                )}
+              </div>
             </div>
           </Card>
         </li>

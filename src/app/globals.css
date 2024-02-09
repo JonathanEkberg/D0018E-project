@@ -49,6 +49,10 @@
   }
 }
 
+html.anti-flash * {
+  transition: none !important;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -56,4 +60,13 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+html {
+  @apply font-sans;
+}
+
+html,
+body {
+  @apply h-full;
 }
