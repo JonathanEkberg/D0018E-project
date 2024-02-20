@@ -1,38 +1,38 @@
-"use client";
-import React from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Button } from "./ui/button";
-import { logoutAction } from "@/app/actions";
-import { useRouter } from "next/navigation";
-import { getCookie } from "cookies-next";
+"use client"
+import React from "react"
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
+import { Button } from "./ui/button"
+import { logoutAction } from "@/app/actions"
+import { useRouter } from "next/navigation"
+import { getCookie } from "cookies-next"
 import {
   Menubar,
   MenubarContent,
   MenubarItem,
   MenubarMenu,
   MenubarTrigger,
-} from "./ui/menubar";
+} from "./ui/menubar"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import Link from "next/link";
-import { LogOut } from "lucide-react";
+} from "./ui/dropdown-menu"
+import Link from "next/link"
+import { LogOut } from "lucide-react"
 
 interface UserButtonProps {
-  name: string;
+  name: string
 }
 
 export function UserButton({ name }: UserButtonProps) {
-  const router = useRouter();
-  const role = getCookie("u_role", { httpOnly: false });
+  const router = useRouter()
+  const role = getCookie("u_role", { httpOnly: false })
 
   async function onClick() {
-    await logoutAction();
-    router.refresh();
+    await logoutAction()
+    router.refresh()
   }
 
   return (
@@ -55,9 +55,9 @@ export function UserButton({ name }: UserButtonProps) {
         )}
 
         <DropdownMenuItem onClick={onClick}>
-          <LogOut className="h-4 w-4 mr-2" /> Logout
+          <LogOut className="mr-2 h-4 w-4" /> Logout
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

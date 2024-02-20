@@ -1,21 +1,21 @@
-import { CreateProduct } from "@/components/CreateProduct";
-import { Button } from "@/components/ui/button";
+import { CreateProduct } from "@/components/CreateProduct"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { getUser } from "@/lib/user";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import React from "react";
+} from "@/components/ui/card"
+import { getUser } from "@/lib/user"
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import React from "react"
 
 const buttons: {
-  title: string;
-  description: string;
-  button: { link: string; name: string };
+  title: string
+  description: string
+  button: { link: string; name: string }
 }[] = [
   {
     title: "Create product",
@@ -27,21 +27,21 @@ const buttons: {
   //     description:"Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
   //     link:"/admin/create-product"
   // }
-];
+]
 
 interface AdminPageProps {}
 
 export default function AdminPage({}: AdminPageProps) {
-  const user = getUser();
+  const user = getUser()
 
   if (!user || user.role !== "ADMIN") {
-    return redirect("/");
+    return redirect("/")
   }
 
   return (
-    <div className="max-w-2xl w-full mx-auto">
+    <div className="mx-auto w-full max-w-2xl">
       <div className="grid grid-cols-2">
-        {buttons.map((card) => (
+        {buttons.map(card => (
           <Card key={card.title}>
             <CardHeader>
               <CardTitle>{card.title}</CardTitle>
@@ -56,5 +56,5 @@ export default function AdminPage({}: AdminPageProps) {
         ))}
       </div>
     </div>
-  );
+  )
 }

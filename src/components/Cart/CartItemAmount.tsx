@@ -1,83 +1,81 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { Button } from "../ui/button";
-import { Check, Minus, Plus } from "lucide-react";
-import { updateCartItemSpecificAmountAction } from "@/app/actions";
-import { toast } from "sonner";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+"use client"
+import React, { useEffect, useState } from "react"
+import { Button } from "../ui/button"
+import { Check, Minus, Plus } from "lucide-react"
+import { updateCartItemSpecificAmountAction } from "@/app/actions"
+import { toast } from "sonner"
+import { Input } from "../ui/input"
+import { Label } from "../ui/label"
 
 interface CartItemAmountProps {
   /** The shopping cart item ID */
-  sciId: number;
+  sciId: number
   /** The default amount chosen for the cart item */
-  defaultAmount: number;
+  defaultAmount: number
 }
 
 export function CartItemAmount({ defaultAmount, sciId }: CartItemAmountProps) {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [amount, setAmount] = useState<number>(defaultAmount);
-  const [numEditing, setNumEditing] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false)
+  const [amount, setAmount] = useState<number>(defaultAmount)
+  const [numEditing, setNumEditing] = useState<boolean>(false)
 
   useEffect(
     function () {
       if (loading || amount < 0) {
-        return;
+        return
       }
 
-      const formData = new FormData();
-      formData.set("sciId", String(sciId));
-      formData.set("amount", String(amount));
+      const formData = new FormData()
+      formData.set("sciId", String(sciId))
+      formData.set("amount", String(amount))
 
       const timeout = setTimeout(async function () {
         try {
-          setLoading(true);
-          await updateCartItemSpecificAmountAction(formData);
+          setLoading(true)
+          await updateCartItemSpecificAmountAction(formData)
         } catch (e) {
           if (e instanceof Error) {
-            toast.error(e.message);
+            toast.error(e.message)
           }
         } finally {
-          setLoading(false);
+          setLoading(false)
         }
-      }, 500);
+      }, 500)
 
-      return () => clearTimeout(timeout);
+      return () => clearTimeout(timeout)
     },
-    [amount]
-  );
+    [amount],
+  )
 
   return (
-    <div className="flex justify-center items-center space-x-1">
+    <div className="flex items-center justify-center space-x-1">
       <div className="flex flex-col items-center space-y-3">
         {numEditing ? (
           //   <form className="flex items-center space-x-2">
           <form
             className="space-y-2"
             // action={updateCartItemSpecificAmountAction}
-            onSubmit={(e) => {
-              e.preventDefault();
+            onSubmit={e => {
+              e.preventDefault()
               // e.target["as"]
-              console.log(e.target);
               if (!("amount" in e.target)) {
-                return;
+                return
               }
-              const amountInput = e.target["amount"] as HTMLInputElement;
-              const amount = amountInput.valueAsNumber;
-              setAmount(amount);
-              console.log();
-              setNumEditing(false);
+              const amountInput = e.target["amount"] as HTMLInputElement
+              const amount = amountInput.valueAsNumber
+              setAmount(amount)
+              setNumEditing(false)
             }}
           >
             <Input
               min={1}
               max={100_000}
               name="amount"
-              className="max-w-20 w-min min-w-8"
+              className="w-min min-w-8 max-w-20"
               defaultValue={amount}
               type="number"
             />
-            <Button type="submit" size="icon" className="w-6 h-6">
+            <Button type="submit" size="icon" className="h-6 w-6">
               <Check size={12} />
             </Button>
           </form>
@@ -87,8 +85,8 @@ export function CartItemAmount({ defaultAmount, sciId }: CartItemAmountProps) {
               disabled={amount > 100_000}
               variant="secondary"
               size="icon"
-              className="w-6 h-6"
-              onClick={() => setAmount((current) => (current += 1))}
+              className="h-6 w-6"
+              onClick={() => setAmount(current => (current += 1))}
             >
               <Plus size={12} />
             </Button>
@@ -98,8 +96,8 @@ export function CartItemAmount({ defaultAmount, sciId }: CartItemAmountProps) {
               type="submit"
               variant="secondary"
               size="icon"
-              className="w-6 h-6"
-              onClick={() => setAmount((current) => (current -= 1))}
+              className="h-6 w-6"
+              onClick={() => setAmount(current => (current -= 1))}
             >
               <Minus size={12} />
             </Button>
@@ -107,5 +105,5 @@ export function CartItemAmount({ defaultAmount, sciId }: CartItemAmountProps) {
         )}
       </div>
     </div>
-  );
+  )
 }

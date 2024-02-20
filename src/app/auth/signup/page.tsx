@@ -1,10 +1,10 @@
-import React from "react";
-import { pool } from "@/lib/database";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import React from "react"
+import { pool } from "@/lib/database"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 import {
   Card,
   CardContent,
@@ -12,51 +12,65 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { ReviewImage } from "@/components/ReviewImage";
-import { Star } from "lucide-react";
+} from "@/components/ui/card"
+import { ReviewImage } from "@/components/ReviewImage"
+import { Star } from "lucide-react"
 
 async function signupAction(formData: FormData) {
-  "use server";
+  "use server"
   const [name, email, password] = [
     formData.get("name"),
     formData.get("email"),
     formData.get("password"),
-  ];
+  ]
 
   if (!email || !password) {
-    throw new Error("You must provide email and password!");
+    redirect(
+      `/auth/signup?toast=${encodeURIComponent(
+        JSON.stringify({
+          type: "success",
+          message: "Missing email or password",
+        }),
+      )}`,
+    )
   }
 
   const existing = await pool.execute(
     "SELECT id, name FROM user WHERE email=?;",
-    [email]
-  );
-  const user = existing[0] as [{ id: number; name: string } | undefined];
+    [email],
+  )
+  const user = existing[0] as [{ id: number; name: string } | undefined]
 
-  if (user.at(0) === undefined) {
-    throw new Error("User with email already exists.");
+  if (user.at(0) !== undefined) {
+    redirect(
+      `/auth/signup?toast=${encodeURIComponent(
+        JSON.stringify({
+          type: "success",
+          message: "Account already exists",
+        }),
+      )}`,
+    )
   }
 
   await pool.execute(
     "INSERT INTO user (name, email, password, role) VALUES (?, ?, ?, 'USER');",
-    [name, email, password]
-  );
-  cookies().set("u_id", String(user[0]!.id), { maxAge: 3600 * 24 });
-  cookies().set("u_name", user[0]!.name, { maxAge: 3600 * 24 });
-  cookies().set("u_role", "USER", { maxAge: 3600 * 24 });
-  redirect("/");
+    [name, email, password],
+  )
+  cookies().set("u_id", String(user[0]!.id), { maxAge: 3600 * 24 })
+  cookies().set("u_name", user[0]!.name, { maxAge: 3600 * 24 })
+  cookies().set("u_role", "USER", { maxAge: 3600 * 24 })
+  redirect("/")
 }
 
 interface SignupPageProps {}
 
 export default function SignupPage({}: SignupPageProps) {
   return (
-    <div className="grid md:grid-cols-2 h-full">
-      <div className="relative w-full h-full bg-red-600/50 md:block hidden">
-        <div className="absolute left-0 w-1/2 h-full bg-gradient-to-r from-zinc-950/50 to-zinc-950/60 z-10"></div>
-        <div className="absolute right-0 w-1/2 h-full bg-gradient-to-r from-zinc-950/60 to-zinc-950/80 z-10"></div>
-        <div className="absolute left-0 top-0 bottom-0 right-0 w-full h-full">
+    <div className="grid h-full md:grid-cols-2">
+      <div className="relative hidden h-full w-full bg-red-600/50 md:block">
+        <div className="absolute left-0 z-10 h-full w-1/2 bg-gradient-to-r from-zinc-950/50 to-zinc-950/60"></div>
+        <div className="absolute right-0 z-10 h-full w-1/2 bg-gradient-to-r from-zinc-950/60 to-zinc-950/80"></div>
+        <div className="absolute bottom-0 left-0 right-0 top-0 h-full w-full">
           <ReviewImage
             alt="Review"
             placeholder="blur"
@@ -64,13 +78,13 @@ export default function SignupPage({}: SignupPageProps) {
             className="object-cover"
           />
         </div>
-        <div className="absolute left-8 bottom-16 z-20 space-y-4 pr-8">
+        <div className="absolute bottom-16 left-8 z-20 space-y-4 pr-8">
           <div className="flex items-center space-x-4">
-            <blockquote className="block text-5xl text-white font-semibold font-serif tracking-tight">
+            <blockquote className="block font-serif text-5xl font-semibold tracking-tight text-white">
               &quot;De godaste äggen jag har ätit.&quot;
             </blockquote>
-            <span className="text-5xl 2xl:block hidden">-</span>
-            <div className="space-x-1 hidden 2xl:flex">
+            <span className="hidden text-5xl text-white 2xl:block">-</span>
+            <div className="hidden space-x-1 2xl:flex">
               {Array(5)
                 .fill(null)
                 .map((_, idx) => (
@@ -78,7 +92,7 @@ export default function SignupPage({}: SignupPageProps) {
                 ))}
             </div>
           </div>
-          <cite className="pl-6 not-italic text-white/75 text-xl block">
+          <cite className="block pl-6 text-xl not-italic text-white/75">
             - Edward Blom
           </cite>
         </div>
@@ -86,7 +100,7 @@ export default function SignupPage({}: SignupPageProps) {
       <div className="grid w-full place-items-center px-12">
         <form
           action={signupAction}
-          className="max-w-lg w-full mx-auto flex flex-col items-center space-y-4"
+          className="mx-auto flex w-full max-w-lg flex-col items-center space-y-4"
         >
           <div className="w-full">
             <CardHeader>
@@ -146,7 +160,7 @@ export default function SignupPage({}: SignupPageProps) {
               </Button>
             </CardFooter>
           </div>
-          <p className="text-muted-foreground text-center w-8/10 max-w-72">
+          <p className="w-8/10 max-w-72 text-center text-sm text-muted-foreground">
             By continuing, you agree to our{" "}
             <a className="underline" href="#">
               Terms of Service
@@ -160,5 +174,5 @@ export default function SignupPage({}: SignupPageProps) {
         </form>
       </div>
     </div>
-  );
+  )
 }

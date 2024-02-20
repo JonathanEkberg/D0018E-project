@@ -1,7 +1,7 @@
-"use client";
-import React, { useState } from "react";
-import { Button } from "../ui/button";
-import { PlusIcon, StarIcon } from "lucide-react";
+"use client"
+import React, { useState } from "react"
+import { Button } from "../ui/button"
+import { PlusIcon, StarIcon } from "lucide-react"
 import {
   Dialog,
   DialogHeader,
@@ -9,45 +9,43 @@ import {
   DialogContent,
   DialogTitle,
   DialogFooter,
-} from "../ui/dialog";
-import { Textarea } from "../ui/textarea";
-import { makeReviewAction } from "@/app/actions";
-import { toast } from "sonner";
-import { Label } from "../ui/label";
+} from "../ui/dialog"
+import { Textarea } from "../ui/textarea"
+import { makeReviewAction } from "@/app/actions"
+import { toast } from "sonner"
+import { Label } from "../ui/label"
 
 interface MakeReviewButtonProps {
-  productId: number;
+  productId: number
 }
 
 export function MakeReviewButton({ productId }: MakeReviewButtonProps) {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [open, setOpen] = useState<boolean>(false);
-  const [stars, setStars] = useState<number>(5);
+  const [loading, setLoading] = useState<boolean>(false)
+  const [open, setOpen] = useState<boolean>(false)
+  const [stars, setStars] = useState<number>(5)
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    console.log("ASDHKASDHKLASDJKLHASJKLD");
-    setLoading(true);
+    setLoading(true)
     try {
-      e.preventDefault();
-      console.log(e.target);
+      e.preventDefault()
 
       if (!("review" in e.target)) {
-        return;
+        return
       }
 
-      const reviewInput = e.target["review"] as HTMLTextAreaElement;
-      const form = new FormData();
-      form.set("stars", String(stars));
-      form.set("review", reviewInput.value);
-      form.set("productId", String(productId));
-      await makeReviewAction(form);
-      setOpen(false);
+      const reviewInput = e.target["review"] as HTMLTextAreaElement
+      const form = new FormData()
+      form.set("stars", String(stars))
+      form.set("review", reviewInput.value)
+      form.set("productId", String(productId))
+      await makeReviewAction(form)
+      setOpen(false)
     } catch (e) {
       if (e instanceof Error) {
-        toast.error(e.message);
+        toast.error(e.message)
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -55,7 +53,7 @@ export function MakeReviewButton({ productId }: MakeReviewButtonProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="secondary" disabled={loading}>
-          <PlusIcon className="h-4 w-4 mr-2" />
+          <PlusIcon className="mr-2 h-4 w-4" />
           Make review
         </Button>
       </DialogTrigger>
@@ -67,15 +65,26 @@ export function MakeReviewButton({ productId }: MakeReviewButtonProps) {
           <div>
             <Label>Stars</Label>
             <div className="flex items-center">
-              {Array(5)
+              {Array(stars)
                 .fill(null)
                 .map((_, idx) => (
                   <StarIcon
-                    className="cursor-pointer"
                     onClick={() => setStars(idx + 1)}
-                    size={20}
-                    fill={stars > idx ? "#fff" : "#000"}
-                    stroke={stars > idx ? "#fff" : "#fff9"}
+                    size={24}
+                    className="cursor-pointer hover:opacity-75"
+                    stroke="#f7bf23"
+                    fill="#ebaf2f"
+                    key={idx}
+                  />
+                ))}
+              {Array(5 - stars)
+                .fill(null)
+                .map((_, idx) => (
+                  <StarIcon
+                    onClick={() => setStars(stars + idx + 1)}
+                    size={24}
+                    className="cursor-pointer stroke-zinc-300 hover:opacity-75 dark:stroke-[#fff9]"
+                    // stroke="#fff9"
                     key={idx}
                   />
                 ))}
@@ -83,11 +92,11 @@ export function MakeReviewButton({ productId }: MakeReviewButtonProps) {
           </div>
           <div>
             <Label>Review</Label>
-            <Textarea className="max-h-64" name="review" />
+            <Textarea className="max-h-64" minLength={3} name="review" />
           </div>
           <Button type="submit">Submit</Button>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

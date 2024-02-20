@@ -1,20 +1,20 @@
-import { CreateProduct } from "@/components/CreateProduct";
-import { getUser } from "@/lib/user";
-import { redirect } from "next/navigation";
-import React from "react";
+import { CreateProduct } from "@/components/CreateProduct"
+import { getUser } from "@/lib/user"
+import { redirect } from "next/navigation"
+import React from "react"
 
 interface AdminCreateProductPageProps {}
 
 export default function AdminCreateProductPage({}: AdminCreateProductPageProps) {
-  const user = getUser();
+  const user = getUser()
 
   if (!user || user.role !== "ADMIN") {
-    return redirect("/");
+    return redirect("/")
   }
 
   return (
-    <div className="max-w-2xl w-full mx-auto">
+    <div className="mx-auto w-full max-w-2xl">
       <CreateProduct />
     </div>
-  );
+  )
 }

@@ -1,27 +1,27 @@
-"use server";
+"use server"
 
-import { pool } from "@/lib/database";
-import { getUser } from "@/lib/user";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { pool } from "@/lib/database"
+import { getUser } from "@/lib/user"
+import { revalidatePath, revalidateTag } from "next/cache"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
 export async function refreshProducts() {
-  revalidatePath("/");
+  revalidatePath("/")
 }
 
 export async function makeReviewAction(formData: FormData) {
-  const user = getUser();
+  const user = getUser()
 
   if (!user) {
-    throw new Error("You must be logged in to remove a order!");
+    throw new Error("You must be logged in to make a review!")
   }
 
   const [review, stars, productId] = [
     formData.get("review"),
     formData.get("stars"),
     formData.get("productId"),
-  ];
+  ]
 
   // 1. Get shopping cart items
   await pool.execute(
@@ -31,42 +31,80 @@ export async function makeReviewAction(formData: FormData) {
       parseInt(stars!.toString()),
       parseInt(productId!.toString()),
       user.id,
-    ]
-  );
+    ],
+  )
 
-  revalidateTag("product-id");
-  revalidatePath(`/product/${productId}`);
+  revalidateTag("product-id")
+  revalidatePath(`/product/${productId}`)
 }
 
 export async function deleteOrderAction(formData: FormData) {
-  const user = getUser();
+  const user = getUser()
 
   if (!user) {
-    throw new Error("You must be logged in to remove a order!");
+    throw new Error("You must be logged in to remove a order!")
+  }
+  const orderId = formData.get("orderId")
+
+  const conn = await pool.getConnection()
+
+  await conn.beginTransaction()
+
+  const orderItemsQuery = await conn.execute(
+    `SELECT amount, product_id from order_item WHERE order_id = ?
+  `,
+    [orderId],
+  )
+
+  const orderItems = orderItemsQuery[0] as {
+    amount: number
+    product_id: number
+  }[]
+
+  for (const item of orderItems) {
+    await pool.execute(`UPDATE product SET stock=stock+? WHERE id=?`, [
+      item.amount,
+      item.product_id,
+    ])
+  }
+  await pool.execute(`DELETE FROM \`order\` WHERE id = ?`, [orderId])
+
+  await conn.commit()
+
+  revalidateTag("orders")
+  revalidateTag("cart-total")
+  revalidateTag("cart-items")
+  revalidatePath(`/orders`)
+}
+
+export async function deleteProduct(id: number) {
+  const user = getUser()
+
+  if (!user || user.role !== "ADMIN") {
+    throw new Error("You must be an admin to remove a product!")
   }
 
-  const orderId = formData.get("orderId");
+  await pool.execute(`DELETE FROM product WHERE id=?`, [id])
 
-  // 1. Get shopping cart items
-  await pool.execute(`DELETE FROM \`order\` WHERE id = ?`, [orderId]);
-
-  revalidateTag("orders");
-  revalidateTag("cart-total");
-  revalidateTag("cart-items");
-  revalidatePath(`/orders`);
+  revalidateTag("orders")
+  revalidateTag("cart-total")
+  revalidateTag("cart-items")
+  revalidateTag("products")
+  revalidatePath(`/`)
+  redirect("/")
 }
 
 export async function purchaseAction() {
-  const user = getUser();
+  const user = getUser()
 
   if (!user) {
-    throw new Error("You must be logged in to add to cart!");
+    throw new Error("You must be logged in to add to cart!")
   }
 
   // await pool.beginTransaction();
-  const conn = await pool.getConnection();
+  const conn = await pool.getConnection()
 
-  await conn.beginTransaction();
+  await conn.beginTransaction()
 
   // 1. Get shopping cart items
   const itemsQuery = await conn.execute(
@@ -75,218 +113,246 @@ export async function purchaseAction() {
     INNER JOIN product ON sci.product_id = product.id
     WHERE sci.user_id = ? 
     GROUP BY sci.id;`,
-    [user.id]
-  );
+    [user.id],
+  )
   const items = itemsQuery[0] as {
-    id: number;
-    product_id: number;
-    user_id: number;
-    amount: number;
-    stock: number;
-    real_price: number;
-  }[];
+    id: number
+    product_id: number
+    user_id: number
+    amount: number
+    stock: number
+    real_price: number
+  }[]
 
   if (items.length === 0) {
-    return;
+    return
   }
 
+  const productStockUpdates = []
   for (const item of items) {
     // Ordering more than in stock
     if (item.amount > item.stock) {
-      await conn.rollback();
-      throw new Error("You cannot order more items than we have in stock.");
+      await conn.rollback()
+      redirect(
+        `/cart?toast=${encodeURIComponent(
+          JSON.stringify({
+            type: "error",
+            message: `You cannot order more items than we have in stock. Ordering ${item.amount} but ${item.stock} in stock.`,
+          }),
+        )}`,
+      )
     }
-  }
 
-  await conn.execute(`INSERT INTO \`order\` (user_id) VALUES (?);`, [user.id]);
+    if (item.real_price > 2_000_000_000) {
+      await conn.rollback()
+      redirect(
+        `/cart?toast=${encodeURIComponent(
+          JSON.stringify({
+            type: "error",
+            message: "You're buying too many eggs",
+          }),
+        )}`,
+      )
+    }
+
+    productStockUpdates.push(
+      await conn.execute(
+        `UPDATE \`product\` p SET p.stock=p.stock-? WHERE id=?;`,
+        [item.amount, item.product_id],
+      ),
+    )
+    revalidatePath(`/products/${item.product_id}`)
+  }
+  console.log(`Updating ${productStockUpdates.length} product stocks`)
+  await Promise.all(productStockUpdates)
+
+  await conn.execute(`INSERT INTO \`order\` (user_id) VALUES (?);`, [user.id])
   const orderQuery = await conn.execute(
     `SELECT id from \`order\` WHERE user_id = ? ORDER BY created_at DESC;`,
-    [user.id]
-  );
+    [user.id],
+  )
 
   const order = orderQuery[0] as [
     {
-      id: number;
-    }
-  ];
-  console.log(orderQuery[0]);
+      id: number
+    },
+  ]
 
   // 2. Get each item product and the prices
   for (const item of items) {
     await conn.execute(
       `INSERT INTO order_item (order_id, product_id, price_usd, amount) VALUES (?, ?, ?, ?);`,
-      [order[0].id, item.product_id, item.real_price, item.amount]
-    );
+      [order[0].id, item.product_id, item.real_price, item.amount],
+    )
   }
 
   await conn.execute(`DELETE FROM shopping_cart_item WHERE user_id = ?;`, [
     user.id,
-  ]);
+  ])
 
-  await conn.commit();
-  revalidateTag("orders");
-  revalidateTag("cart-total");
-  revalidateTag("cart-items");
-  revalidatePath(`/orders`);
-  redirect("/orders");
+  await conn.commit()
+  revalidateTag("orders")
+  revalidateTag("cart-total")
+  revalidateTag("cart-items")
+  revalidatePath(`/orders`)
+  redirect("/orders")
 }
 
 export async function addToCartAction(formData: FormData) {
-  const productId = formData.get("productId");
+  const productId = formData.get("productId")
 
   if (!productId) {
-    throw new Error("Missing product id");
+    throw new Error("Missing product id")
   }
 
-  const user = getUser();
+  const user = getUser()
 
   if (!user) {
-    throw new Error("You must be logged in to add to cart!");
+    throw new Error("You must be logged in to add to cart!")
   }
 
   // 1. Check if product exists
   const data = await pool.execute("SELECT id FROM product WHERE id=?", [
     productId,
-  ]);
+  ])
 
-  const id = data[0] as [{ id: number }] | [];
+  const id = data[0] as [{ id: number }] | []
 
   if (!id) {
-    throw new Error("Could not find product");
+    throw new Error("Could not find product")
   }
 
   await pool.execute(
     `INSERT INTO shopping_cart_item (user_id, product_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE amount = amount + 1;`,
-    [user.id, productId]
-  );
-  revalidatePath(`/products/${productId}`);
-  revalidateTag("cart-items");
-  revalidateTag("cart-total");
+    [user.id, productId],
+  )
+  revalidatePath(`/products/${productId}`)
+  revalidateTag("cart-items")
+  revalidateTag("cart-total")
 }
 
 export async function updateCartItemAmountAction(formData: FormData) {
-  const user = getUser();
+  const user = getUser()
 
   if (!user) {
-    throw new Error("You must be logged in!");
+    throw new Error("You must be logged in!")
   }
 
   const [cartItemId, direction] = [
     formData.get("sciId"),
     formData.get("direction"),
-  ];
+  ]
 
-  console.log(cartItemId, direction);
   if (!cartItemId || !direction) {
-    throw new Error("Failed to update");
+    throw new Error("Failed to update")
   }
 
-  const sciId = parseInt(cartItemId.toString());
+  const sciId = parseInt(cartItemId.toString())
 
   if (!Number.isSafeInteger(sciId)) {
-    throw new Error("Invalid shopping cart item ID");
+    throw new Error("Invalid shopping cart item ID")
   }
 
   // 1. Check if cart item exists
   const data = await pool.execute(
     "SELECT id FROM shopping_cart_item WHERE id=?",
-    [sciId]
-  );
+    [sciId],
+  )
 
-  const id = data[0] as [{ id: number }] | [];
+  const id = data[0] as [{ id: number }] | []
 
   if (!id[0]?.id) {
-    throw new Error("Could not find product");
+    throw new Error("Could not find product")
   }
 
   await pool.execute(
     `UPDATE shopping_cart_item SET amount = amount ${
       direction === "+" ? "+" : "-"
     } 1 WHERE id = ?;`,
-    [id[0].id]
-  );
-  revalidateTag("cart-items");
-  revalidateTag("cart-total");
+    [id[0].id],
+  )
+  revalidateTag("cart-items")
+  revalidateTag("cart-total")
 }
 
 export async function updateCartItemSpecificAmountAction(formData: FormData) {
-  const user = getUser();
+  const user = getUser()
 
   if (!user) {
-    throw new Error("You must be logged in!");
+    throw new Error("You must be logged in!")
   }
 
   const [unsafeCartItemId, unsafeAmount] = [
     formData.get("sciId"),
     formData.get("amount"),
-  ];
+  ]
 
   if (!unsafeCartItemId || unsafeAmount === null) {
-    throw new Error("Failed to update");
+    throw new Error("Failed to update")
   }
 
-  const sciId = parseInt(unsafeCartItemId.toString());
-  const amount = parseInt(unsafeAmount.toString());
+  const sciId = parseInt(unsafeCartItemId.toString())
+  const amount = parseInt(unsafeAmount.toString())
 
   if (!Number.isSafeInteger(sciId) || sciId < 0) {
-    throw new Error("Invalid shopping cart item ID");
+    throw new Error("Invalid shopping cart item ID")
   }
 
   if (!Number.isSafeInteger(amount) || amount < 0) {
-    throw new Error("Amount must be a valid integer greater than zero.");
+    throw new Error("Amount must be a valid integer greater than zero.")
   }
 
   const data = await pool.execute(
     "SELECT id FROM shopping_cart_item WHERE id=?",
-    [sciId]
-  );
+    [sciId],
+  )
 
-  const id = data[0] as [{ id: number }] | [];
+  const id = data[0] as [{ id: number }] | []
 
   if (!id[0]?.id) {
-    throw new Error("Could not find cart item.");
+    throw new Error("Could not find cart item.")
   }
 
   await pool.execute(`UPDATE shopping_cart_item SET amount = ? WHERE id = ?;`, [
     amount,
     id[0].id,
-  ]);
-  revalidateTag("cart-items");
-  revalidateTag("cart-total");
+  ])
+  revalidateTag("cart-items")
+  revalidateTag("cart-total")
 }
 
 export async function removeCartItemAction(formData: FormData) {
-  const user = getUser();
+  const user = getUser()
 
   if (!user) {
-    throw new Error("You must be logged in!");
+    throw new Error("You must be logged in!")
   }
 
-  const cartItemId = formData.get("sciId");
+  const cartItemId = formData.get("sciId")
 
   if (!cartItemId) {
-    throw new Error("Failed to update");
+    throw new Error("Failed to update")
   }
 
-  const sciId = parseInt(cartItemId.toString());
+  const sciId = parseInt(cartItemId.toString())
 
   if (!Number.isSafeInteger(sciId)) {
-    throw new Error("Invalid shopping cart item ID");
+    throw new Error("Invalid shopping cart item ID")
   }
 
   // 1. Check if cart item exists
   await pool
     .execute("DELETE FROM shopping_cart_item WHERE id=?", [sciId])
-    .catch((e) => {});
-  revalidateTag("cart-total");
+    .catch(e => {})
+  revalidateTag("cart-total")
 }
 
 export async function logoutAction() {
-  "use server";
-  cookies().delete("u_id");
-  cookies().delete("u_name");
-  cookies().delete("u_role");
-  revalidatePath("/");
+  "use server"
+  cookies().delete("u_id")
+  cookies().delete("u_name")
+  cookies().delete("u_role")
+  revalidatePath("/")
 }
 
 const eggs: string[] = [
@@ -316,29 +382,29 @@ const eggs: string[] = [
   "Rolex",
   "Fabergé",
   "Påsk",
-];
+]
 
 export async function resetDatabase(formData: FormData) {
-  "use server";
-  await pool.execute("DELETE FROM product WHERE true;");
+  "use server"
+  await pool.execute("DELETE FROM product WHERE true;")
 
   // "sort" is in-place so make a copy
-  const random = [...eggs].sort(() => Math.random() * 2 - 1);
+  const random = [...eggs].sort(() => Math.random() * 2 - 1)
   const sql = `
 INSERT INTO product (name, description, image) VALUES
-${random.map(() => "  (?, ?, ?)").join(",\n")};`;
-  const values: string[] = [];
+${random.map(() => "  (?, ?, ?)").join(",\n")};`
+  const values: string[] = []
   for (let i = 0; i < random.length; i++) {
-    const egg = random[i];
+    const egg = random[i]
     values.push(
       egg,
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
       `https://d0018e.aistudybuddy.se/eggs/egg-${eggs.findIndex(
-        (val) => val === egg
-      )}.jpeg`
-    );
+        val => val === egg,
+      )}.jpeg`,
+    )
   }
-  await pool.execute(sql, values);
-  revalidateTag("products");
-  revalidatePath("/");
+  await pool.execute(sql, values)
+  revalidateTag("products")
+  revalidatePath("/")
 }

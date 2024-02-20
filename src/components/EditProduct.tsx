@@ -1,6 +1,6 @@
 import { pool } from "@/lib/database"
 import { revalidatePath, revalidateTag } from "next/cache"
-import React from "react"
+import { redirect } from "next/navigation"
 import {
   Card,
   CardContent,
@@ -13,28 +13,23 @@ import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 import { Textarea } from "./ui/textarea"
 import { Button } from "./ui/button"
-import { redirect } from "next/navigation"
 import { z } from "zod"
+import { EditProductDeleteButton } from "./EditProductDeleteButton"
 
 const schema = z.object({
+  id: z.coerce.number(),
   name: z.string(),
   description: z.string(),
   image: z.string(),
-  price_usd: z.coerce
-    .number()
-    .min(0)
-    .max(2000000000, { message: "Price too high" })
-    .nullish(),
-  stock: z.coerce
-    .number()
-    .min(0)
-    .max(2000000000, { message: "Stock too large" })
-    .nullish(),
+  price_usd: z.coerce.number().positive().nullish(),
+  stock: z.coerce.number().positive().nullish(),
 })
 
-async function createProduct(formData: FormData) {
+export async function editProduct(formData: FormData) {
   "use server"
+
   const parsed = schema.safeParse({
+    id: formData.get("id")!.toString(),
     name: formData.get("name")!.toString(),
     description: formData.get("description")!.toString(),
     image: formData.get("image")!.toString(),
@@ -50,37 +45,53 @@ async function createProduct(formData: FormData) {
     }
 
     redirect(
-      `/admin/create-product?toast=${encodeURIComponent(
+      `/admin/edit-product/${formData
+        .get("id")!
+        .toString()}?toast=${encodeURIComponent(
         JSON.stringify({ type: "error", message: errors.join(", ") }),
       )}`,
     )
   }
 
-  const { name, description, image, price_usd: price, stock } = parsed.data
-  const values = [name, description, image, price, stock]
+  const { name, description, image, price_usd: price, stock, id } = parsed.data
+  const values = [name, description, image, price, stock, id]
   console.log("Creating product with values:", values)
 
-  const result = await pool.execute(
-    `INSERT INTO product (name, description, image, price_usd, stock) VALUES(?, ?, ?, ?, ?);`,
+  await pool.execute(
+    `UPDATE product SET name=?, description=?, image=?, price_usd=?, stock=? WHERE id=?;`,
     values,
   )
-  const value = result[0]
   revalidateTag("products")
   revalidatePath("/")
   redirect("/")
 }
 
-interface CreateProductProps {}
+export interface EditProductProps {
+  id: number
+  name: string
+  description: string
+  image: string
+  price: number | null
+  stock: number | null
+}
 
-export function CreateProduct({}: CreateProductProps) {
+export function EditProduct({
+  id,
+  name,
+  description,
+  image,
+  price,
+  stock,
+}: EditProductProps) {
   return (
     // <Card className="bg-zinc-900 p-6 rounded-md w-full">
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Create product</CardTitle>
-        <CardDescription>Add more products for us to sell.</CardDescription>
+        <CardTitle>Edit product</CardTitle>
+        <CardDescription>Modify existing products.</CardDescription>
       </CardHeader>
-      <form action={createProduct}>
+      <form action={editProduct}>
+        <input hidden readOnly value={id} />
         <CardContent className="space-y-2">
           <div>
             <Label htmlFor="name">Name</Label>
@@ -89,9 +100,7 @@ export function CreateProduct({}: CreateProductProps) {
               name="name"
               placeholder="Name of the product"
               required
-              defaultValue={
-                process.env.NODE_ENV === "development" ? "Ägg" : undefined
-              }
+              defaultValue={name}
             />
           </div>
           <div>
@@ -101,11 +110,7 @@ export function CreateProduct({}: CreateProductProps) {
               name="description"
               placeholder="Product description"
               required
-              defaultValue={
-                process.env.NODE_ENV === "development"
-                  ? "Färdig knäckt ägg för hela familjen"
-                  : undefined
-              }
+              defaultValue={description}
             />
           </div>
           <div>
@@ -115,11 +120,7 @@ export function CreateProduct({}: CreateProductProps) {
               name="image"
               placeholder="Image URL"
               required
-              defaultValue={
-                process.env.NODE_ENV === "development"
-                  ? "https://d0018e.aistudybuddy.se/eggs/egg-12.jpeg"
-                  : undefined
-              }
+              defaultValue={image}
             />
           </div>
           <div className="flex space-x-4">
@@ -131,9 +132,7 @@ export function CreateProduct({}: CreateProductProps) {
                 placeholder="Price in USD"
                 required
                 type="number"
-                defaultValue={
-                  process.env.NODE_ENV === "development" ? 8 : undefined
-                }
+                defaultValue={price ?? undefined}
               />
             </div>
             <div className="flex-1">
@@ -144,15 +143,14 @@ export function CreateProduct({}: CreateProductProps) {
                 placeholder="Stock"
                 required
                 type="number"
-                defaultValue={
-                  process.env.NODE_ENV === "development" ? 123 : undefined
-                }
+                defaultValue={stock ?? undefined}
               />
             </div>
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button type="submit">Create</Button>
+          <EditProductDeleteButton id={id} />
         </CardFooter>
       </form>
     </Card>

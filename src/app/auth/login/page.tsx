@@ -1,71 +1,70 @@
-import React from "react";
-import { pool } from "@/lib/database";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cookies } from "next/headers";
-import { RedirectType, redirect } from "next/navigation";
+import React from "react"
+import { pool } from "@/lib/database"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { cookies } from "next/headers"
+import { RedirectType, redirect } from "next/navigation"
 import {
-  Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { revalidatePath } from "next/cache";
-import Image from "next/image";
-import review1 from "../../../../public/review-1.jpg";
-import { Noto_Serif } from "next/font/google";
-import clsx from "clsx";
-import { Star } from "lucide-react";
-import { ReviewImage } from "@/components/ReviewImage";
+} from "@/components/ui/card"
+import { Star } from "lucide-react"
+import { ReviewImage } from "@/components/ReviewImage"
 
 async function loginAction(formData: FormData) {
-  "use server";
-  const [email, password] = [formData.get("email"), formData.get("password")];
+  "use server"
+  const [email, password] = [formData.get("email"), formData.get("password")]
 
   if (!email || !password) {
-    throw new Error("You must provide email and password!");
+    throw new Error("You must provide email and password!")
   }
 
   const query = await pool.execute(
     "SELECT id, name, role FROM user WHERE email=? AND password=?",
-    [email, password]
-  );
+    [email, password],
+  )
 
   const parsed = query[0] as [
     | {
-        id: number;
-        name: string;
-        role: "USER" | "ADMIN";
+        id: number
+        name: string
+        role: "USER" | "ADMIN"
       }
-    | undefined
-  ];
+    | undefined,
+  ]
 
-  const user = parsed[0];
+  const user = parsed[0]
 
   if (!user) {
-    throw new Error("User not found");
+    redirect(
+      `/auth/login?toast=${encodeURIComponent(
+        "Wrong password or the user doesn't exist.",
+      )}`,
+      RedirectType.replace,
+    )
   }
 
-  const cookie_store = cookies();
+  const cookie_store = cookies()
 
-  cookie_store.set("u_id", String(user.id), { maxAge: 3600 * 24 });
-  cookie_store.set("u_name", user.name, { maxAge: 3600 * 24 });
-  cookie_store.set("u_role", user.role, { maxAge: 3600 * 24 });
-  redirect("/");
+  cookie_store.set("u_id", String(user.id), { maxAge: 3600 * 24 })
+  cookie_store.set("u_name", user.name, { maxAge: 3600 * 24 })
+  cookie_store.set("u_role", user.role, { maxAge: 3600 * 24 })
+  redirect("/")
 }
 
 interface LoginPageProps {}
 
 export default function LoginPage({}: LoginPageProps) {
   return (
-    <div className="grid md:grid-cols-2 h-full">
-      <div className="relative w-full h-full bg-red-600/50 md:block hidden">
-        <div className="absolute left-0 w-1/2 h-full bg-gradient-to-r from-zinc-950/50 to-zinc-950/60 z-10"></div>
-        <div className="absolute right-0 w-1/2 h-full bg-gradient-to-r from-zinc-950/60 to-zinc-950/80 z-10"></div>
-        <div className="absolute left-0 top-0 bottom-0 right-0 w-full h-full">
+    <div className="grid h-full md:grid-cols-2">
+      <div className="relative hidden h-full w-full bg-red-600/50 md:block">
+        <div className="absolute left-0 z-10 h-full w-1/2 bg-gradient-to-r from-zinc-950/50 to-zinc-950/60"></div>
+        <div className="absolute right-0 z-10 h-full w-1/2 bg-gradient-to-r from-zinc-950/60 to-zinc-950/80"></div>
+        <div className="absolute bottom-0 left-0 right-0 top-0 h-full w-full">
           {/* <Image */}
           <ReviewImage
             // src={review1}
@@ -75,13 +74,13 @@ export default function LoginPage({}: LoginPageProps) {
             className="object-cover"
           />
         </div>
-        <div className="absolute left-8 bottom-16 z-20 space-y-4 pr-8">
+        <div className="absolute bottom-16 left-8 z-20 space-y-4 pr-8">
           <div className="flex items-center space-x-4">
-            <blockquote className="block text-5xl text-white font-semibold font-serif tracking-tight">
+            <blockquote className="block font-serif text-5xl font-semibold tracking-tight text-white">
               &quot;De godaste äggen jag har ätit.&quot;
             </blockquote>
-            <span className="text-5xl 2xl:block hidden">-</span>
-            <div className="space-x-1 hidden 2xl:flex">
+            <span className="hidden text-5xl 2xl:block">-</span>
+            <div className="hidden space-x-1 2xl:flex">
               {Array(5)
                 .fill(null)
                 .map((_, idx) => (
@@ -89,7 +88,7 @@ export default function LoginPage({}: LoginPageProps) {
                 ))}
             </div>
           </div>
-          <cite className="pl-6 not-italic text-white/75 text-xl block">
+          <cite className="block pl-6 text-xl not-italic text-white/75">
             - Edward Blom
           </cite>
         </div>
@@ -97,7 +96,7 @@ export default function LoginPage({}: LoginPageProps) {
       <div className="grid place-items-center px-12">
         <form
           action={loginAction}
-          className="w-full max-w-lg mx-auto space-y-4 flex flex-col items-center"
+          className="mx-auto flex w-full max-w-lg flex-col items-center space-y-4"
         >
           <div className="w-full">
             <CardHeader>
@@ -144,7 +143,7 @@ export default function LoginPage({}: LoginPageProps) {
               </Button>
             </CardFooter>
           </div>
-          <p className="text-muted-foreground text-center w-8/10 max-w-72">
+          <p className="w-8/10 max-w-72 text-center text-sm text-muted-foreground">
             By continuing, you agree to our{" "}
             <a className="underline" href="#">
               Terms of Service
@@ -158,5 +157,5 @@ export default function LoginPage({}: LoginPageProps) {
         </form>
       </div>
     </div>
-  );
+  )
 }

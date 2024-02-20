@@ -1,11 +1,11 @@
-import React from "react";
-import { pool } from "@/lib/database";
-import { getUser } from "@/lib/user";
-import { redirect } from "next/navigation";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
-import { unstable_cache } from "next/cache";
+import React from "react"
+import { pool } from "@/lib/database"
+import { getUser } from "@/lib/user"
+import { redirect } from "next/navigation"
+import Image from "next/image"
+import { Button } from "@/components/ui/button"
+import { Trash } from "lucide-react"
+import { unstable_cache } from "next/cache"
 import {
   Table,
   TableBody,
@@ -13,17 +13,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/components/ui/table"
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { purchaseAction, removeCartItemAction } from "../actions";
-import { CartItemAmount } from "@/components/Cart/CartItemAmount";
-import { DollarFormatter } from "@/components/DollarFormatter";
+} from "@/components/ui/card"
+import { purchaseAction, removeCartItemAction } from "../actions"
+import { CartItemAmount } from "@/components/Cart/CartItemAmount"
+import { DollarFormatter } from "@/components/DollarFormatter"
 
 const getShoppingCartItems = unstable_cache(
   async (userId: number) => {
@@ -34,21 +34,21 @@ p.id as p_id, p.name as p_name, p.image as p_image, p.price_usd as p_price_usd
 FROM shopping_cart_item sci
 INNER JOIN product p ON p.id = sci.product_id
 WHERE sci.user_id = ?;`,
-      [userId]
-    );
+      [userId],
+    )
 
     return data[0] as {
-      sci_id: number;
-      sci_amount: number;
-      p_id: number;
-      p_name: string;
-      p_image: string;
-      p_price_usd: number | null;
-    }[];
+      sci_id: number
+      sci_amount: number
+      p_id: number
+      p_name: string
+      p_image: string
+      p_price_usd: number | null
+    }[]
   },
   ["cart-items"],
-  { tags: ["cart-items"] }
-);
+  { tags: ["cart-items"] },
+)
 
 const getShoppingCartTotal = unstable_cache(
   async (userId: number) => {
@@ -58,37 +58,37 @@ SUM(sci.amount * p.price_usd) as total_price
 FROM shopping_cart_item sci
 INNER JOIN product p ON p.id = sci.product_id
 WHERE sci.user_id = ?;`,
-      [userId]
-    );
+      [userId],
+    )
 
     return (
       data[0] as [
         {
-          total_price: number;
-        }
+          total_price: number
+        },
       ]
-    )[0].total_price;
+    )[0].total_price
   },
   ["cart-total"],
-  { tags: ["cart-total"], revalidate: 60 }
-);
+  { tags: ["cart-total"], revalidate: 60 },
+)
 
 interface CartPageProps {}
 
 export default async function CartPage({}: CartPageProps) {
-  const user = getUser();
+  const user = getUser()
 
   if (!user) {
-    redirect("/");
+    redirect("/")
   }
 
   const [items, total] = await Promise.all([
     getShoppingCartItems(user.id),
     getShoppingCartTotal(user.id),
-  ]);
+  ])
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4">
       {/* <h1 className="text-3xl font-bold tracking-tight">Shopping cart</h1> */}
       <Card>
         <CardHeader>
@@ -106,9 +106,9 @@ export default async function CartPage({}: CartPageProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item) => (
+              {items.map(item => (
                 <TableRow key={item.sci_id}>
-                  <TableCell className="font-medium flex items-center space-x-4">
+                  <TableCell className="flex items-center space-x-4 font-medium">
                     <Image
                       className="rounded-xl"
                       src={item.p_image}
@@ -116,21 +116,21 @@ export default async function CartPage({}: CartPageProps) {
                       width={96}
                       height={96}
                     />
-                    <div className="text-xl overflow-hidden">{item.p_name}</div>
+                    <div className="overflow-hidden text-xl">{item.p_name}</div>
                   </TableCell>
 
-                  <TableCell className="font-medium text-center">
+                  <TableCell className="text-center font-medium">
                     <DollarFormatter value={item.p_price_usd ?? 0} />
                   </TableCell>
 
-                  <TableCell className="font-medium text-center">
+                  <TableCell className="text-center font-medium">
                     <CartItemAmount
                       sciId={item.sci_id}
                       defaultAmount={item.sci_amount}
                     />
                   </TableCell>
 
-                  <TableCell className="font-medium text-center">
+                  <TableCell className="text-center font-medium">
                     <DollarFormatter
                       value={item.sci_amount * (item.p_price_usd ?? 0)}
                     />
@@ -146,7 +146,7 @@ export default async function CartPage({}: CartPageProps) {
                         value={item.sci_id}
                       />
                       <Button
-                        className="w-8 h-8"
+                        className="h-8 w-8"
                         size="icon"
                         variant="destructive"
                       >
@@ -160,7 +160,7 @@ export default async function CartPage({}: CartPageProps) {
           </Table>
         </CardContent>
 
-        <CardFooter className="w-full flex justify-between">
+        <CardFooter className="flex w-full justify-between">
           <div className="text-xl">
             <span className="text-muted-foreground">Total:</span>{" "}
             <DollarFormatter className="font-medium" value={total} />
@@ -177,5 +177,5 @@ export default async function CartPage({}: CartPageProps) {
         </CardFooter>
       </Card>
     </div>
-  );
+  )
 }

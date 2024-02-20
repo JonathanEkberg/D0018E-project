@@ -1,5 +1,5 @@
-import { unstable_cache } from "next/cache";
-import { pool } from "@/lib/database";
+import { unstable_cache } from "next/cache"
+import { pool } from "@/lib/database"
 import {
   Table,
   TableBody,
@@ -7,15 +7,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
-import { DollarFormatter } from "@/components/DollarFormatter";
-import Link from "next/link";
-import { getUser } from "@/lib/user";
-import { redirect } from "next/navigation";
-import { deleteOrderAction } from "../actions";
-import { Badge } from "@/components/ui/badge";
+} from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Trash } from "lucide-react"
+import { DollarFormatter } from "@/components/DollarFormatter"
+import Link from "next/link"
+import { getUser } from "@/lib/user"
+import { redirect } from "next/navigation"
+import { deleteOrderAction } from "../actions"
+import { Badge } from "@/components/ui/badge"
 
 const getOrders = unstable_cache(
   async (id: number) => {
@@ -25,63 +25,62 @@ const getOrders = unstable_cache(
       INNER JOIN order_item ON order.id = order_item.order_id
       INNER JOIN product ON order_item.product_id = product.id
       WHERE user_id = ?;`,
-      [id]
-    );
+      [id],
+    )
 
     const orderItems = data[0] as {
-      id: number;
-      delivered: boolean;
-      amount: number;
-      product_id: number;
-      price_usd: string;
-      name: string;
-    }[];
+      id: number
+      delivered: boolean
+      amount: number
+      product_id: number
+      price_usd: string
+      name: string
+    }[]
 
-    const orders: Record<string, typeof orderItems> = {};
+    const orders: Record<string, typeof orderItems> = {}
     for (const item of orderItems) {
-      const key = String(item.id);
+      const key = String(item.id)
       if (!(key in orders)) {
-        orders[key] = [];
+        orders[key] = []
       }
 
-      orders[key].push(item);
+      orders[key].push(item)
     }
-    return orders;
+    return orders
   },
   ["orders"],
-  { tags: ["orders"], revalidate: 30 }
-);
+  { tags: ["orders"], revalidate: 30 },
+)
 
 export default async function OrderPage() {
-  const user = getUser();
+  const user = getUser()
 
   if (!user) {
-    return redirect("/");
+    return redirect("/")
   }
 
-  const orders = await getOrders(user.id);
-  console.log(orders);
+  const orders = await getOrders(user.id)
   //   const orders: {
   //     order_id: number;
   //     items: string[];
   //     total: number;
   //   }[] = [{ order_id: 69, items: ["Gud", "Holy Grail"], total: 2000 }];
   return (
-    <div className="max-w-2xl w-full mx-auto">
+    <div className="mx-auto w-full max-w-2xl">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="text-left w-24">Order</TableHead>
-            <TableHead className="text-left w-24">Status</TableHead>
-            <TableHead className="text-center w-24">Total</TableHead>
-            <TableHead className="text-left w-full">Items</TableHead>
+            <TableHead className="w-24 text-left">Order</TableHead>
+            <TableHead className="w-24 text-left">Status</TableHead>
+            <TableHead className="w-24 text-center">Total</TableHead>
+            <TableHead className="w-full text-left">Items</TableHead>
             <TableHead className="text-right">Manage</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {Object.entries(orders).map(([orderId, items]) => (
             <TableRow key={orderId}>
-              <TableCell className="font-medium flex items-center space-x-4">
+              <TableCell className="flex items-center space-x-4 font-medium">
                 <div>{orderId}</div>
               </TableCell>
 
@@ -98,13 +97,13 @@ export default async function OrderPage() {
               <TableCell className="font-medium">
                 <DollarFormatter
                   value={items
-                    .map((item) => Number(item.price_usd))
+                    .map(item => Number(item.price_usd))
                     .reduce((total, curr) => total + curr)}
                 />
               </TableCell>
               <TableCell className="font-medium">
                 {items
-                  .map((item) => ({
+                  .map(item => ({
                     id: item.product_id,
                     name: item.name,
                   }))
@@ -121,7 +120,7 @@ export default async function OrderPage() {
                   ))}
               </TableCell>
 
-              <TableCell className="text-right flex space-x-2 w-full flex-end">
+              <TableCell className="flex-end flex w-full space-x-2 text-right">
                 {/* <form action={removeCartItemAction}> */}
                 <input
                   readOnly
@@ -152,5 +151,5 @@ export default async function OrderPage() {
         </TableBody>
       </Table>
     </div>
-  );
+  )
 }
