@@ -1,5 +1,5 @@
-import type { ConnectionOptions, Pool } from "mysql2/promise";
-import { createPool } from "mysql2/promise";
+import type { ConnectionOptions, Pool } from "mysql2/promise"
+import { createPool } from "mysql2/promise"
 
 const opts: ConnectionOptions = {
   host: process.env.DB_HOST as string,
@@ -13,7 +13,7 @@ const opts: ConnectionOptions = {
   maxIdle: 10,
   queueLimit: 0,
   keepAliveInitialDelay: 0,
-};
+}
 
 // console.log()
 // console.log()
@@ -25,14 +25,14 @@ const opts: ConnectionOptions = {
 // console.log()
 
 declare global {
-  var pool: Pool | undefined;
+  var pool: Pool | undefined
 }
 
-const pool = global.pool || createPool(opts);
+const pool = global.pool || createPool(opts)
 
 // Ensure we only create one pool during development between hot reloads https://nextjs.org/docs/architecture/fast-refresh
 if (process.env.NODE_ENV !== "production") {
-  global.pool = pool;
+  global.pool = pool
 }
 
-export { pool };
+export { pool }

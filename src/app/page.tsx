@@ -1,15 +1,15 @@
-import { CreateProduct } from "@/components/CreateProduct";
-import { ProductList } from "@/components/ProductList";
-import { Card } from "@/components/ui/card";
-import { Suspense } from "react";
+import { CreateProduct } from "@/components/CreateProduct"
+import { ProductList } from "@/components/ProductList"
+import { Card } from "@/components/ui/card"
+import { Suspense } from "react"
 
-export const dynamic = "auto";
-export const revalidate = 3600;
+export const dynamic = "auto"
+export const revalidate = 3600
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen max-w-2xl flex-col items-center justify-between p-8 mx-auto">
+    <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col items-center justify-between p-8">
       <ProductList />
     </main>
-  );
+  )
 }

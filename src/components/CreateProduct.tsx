@@ -1,6 +1,6 @@
-import { pool } from "@/lib/database";
-import { revalidatePath, revalidateTag } from "next/cache";
-import React from "react";
+import { pool } from "@/lib/database"
+import { revalidatePath, revalidateTag } from "next/cache"
+import React from "react"
 import {
   Card,
   CardContent,
@@ -8,35 +8,71 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "./ui/card";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
-import { Button } from "./ui/button";
+} from "./ui/card"
+import { Input } from "./ui/input"
+import { Label } from "./ui/label"
+import { Textarea } from "./ui/textarea"
+import { Button } from "./ui/button"
+import { redirect } from "next/navigation"
+import { z } from "zod"
+
+const schema = z.object({
+  name: z.string(),
+  description: z.string(),
+  image: z.string(),
+  price_usd: z.coerce
+    .number()
+    .min(0)
+    .max(2000000000, { message: "Price too high" })
+    .nullish(),
+  stock: z.coerce
+    .number()
+    .min(0)
+    .max(2000000000, { message: "Stock too large" })
+    .nullish(),
+})
 
 async function createProduct(formData: FormData) {
-  "use server";
-  const name = formData.get("name")!.toString();
-  const description = formData.get("description")!.toString();
-  const image = formData.get("image")!.toString();
-  const values = [name, description, image];
-  console.log("Creating product with values:", values);
+  "use server"
+  const parsed = schema.safeParse({
+    name: formData.get("name")!.toString(),
+    description: formData.get("description")!.toString(),
+    image: formData.get("image")!.toString(),
+    price_usd: formData.get("price_usd")!.toString(),
+    stock: formData.get("stock")!.toString(),
+  })
+
+  if (parsed.success === false) {
+    let errors = [] as string[]
+
+    for (const value of Object.values(parsed.error.flatten().fieldErrors)) {
+      errors = [...errors, ...value]
+    }
+
+    redirect(
+      `/admin/create-product?toast=${encodeURIComponent(
+        JSON.stringify({ type: "error", message: errors.join(", ") }),
+      )}`,
+    )
+  }
+
+  const { name, description, image, price_usd: price, stock } = parsed.data
+  const values = [name, description, image, price, stock]
+  console.log("Creating product with values:", values)
 
   const result = await pool.execute(
-    `INSERT INTO product (name, description, image) VALUES(?, ?, ?);`,
-    values
-  );
-  const value = result[0];
-  console.log(value);
-  revalidateTag("products");
-  revalidatePath("/");
+    `INSERT INTO product (name, description, image, price_usd, stock) VALUES(?, ?, ?, ?, ?);`,
+    values,
+  )
+  const value = result[0]
+  revalidateTag("products")
+  revalidatePath("/")
+  redirect("/")
 }
 
 interface CreateProductProps {}
 
 export function CreateProduct({}: CreateProductProps) {
-  //   const db = await createDb();
-  return <div></div>;
   return (
     // <Card className="bg-zinc-900 p-6 rounded-md w-full">
     <Card className="w-full">
@@ -86,11 +122,39 @@ export function CreateProduct({}: CreateProductProps) {
               }
             />
           </div>
+          <div className="flex space-x-4">
+            <div className="flex-1">
+              <Label htmlFor="price_usd">Price</Label>
+              <Input
+                id="price_usd"
+                name="price_usd"
+                placeholder="Price in USD"
+                required
+                type="number"
+                defaultValue={
+                  process.env.NODE_ENV === "development" ? 8 : undefined
+                }
+              />
+            </div>
+            <div className="flex-1">
+              <Label htmlFor="stock">Stock</Label>
+              <Input
+                id="stock"
+                name="stock"
+                placeholder="Stock"
+                required
+                type="number"
+                defaultValue={
+                  process.env.NODE_ENV === "development" ? 123 : undefined
+                }
+              />
+            </div>
+          </div>
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button type="submit">Create</Button>
         </CardFooter>
       </form>
     </Card>
-  );
+  )
 }
