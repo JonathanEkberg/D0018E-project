@@ -133,6 +133,7 @@ export function EditProduct({
                 required
                 type="number"
                 defaultValue={price ?? undefined}
+                min={0}
               />
             </div>
             <div className="flex-1">
@@ -144,6 +145,7 @@ export function EditProduct({
                 required
                 type="number"
                 defaultValue={stock ?? undefined}
+                min={0}
               />
             </div>
           </div>

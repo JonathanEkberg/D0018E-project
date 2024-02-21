@@ -134,6 +134,7 @@ export function CreateProduct({}: CreateProductProps) {
                 defaultValue={
                   process.env.NODE_ENV === "development" ? 8 : undefined
                 }
+                min={0}
               />
             </div>
             <div className="flex-1">
@@ -147,6 +148,7 @@ export function CreateProduct({}: CreateProductProps) {
                 defaultValue={
                   process.env.NODE_ENV === "development" ? 123 : undefined
                 }
+                min={0}
               />
             </div>
           </div>
