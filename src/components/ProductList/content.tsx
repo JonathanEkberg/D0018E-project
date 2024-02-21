@@ -10,9 +10,11 @@ import { unstable_cache } from "next/cache"
 import { getUser } from "@/lib/user"
 
 export const getProducts = unstable_cache(
-  async () => {
+  async (page: number) => {
+    const PRODUCT_PER_PAGE = 10
     const data = await pool.execute(
-      `SELECT id, name, description, image FROM product ORDER BY created_at DESC LIMIT 10;`,
+      `SELECT id, name, description, image FROM product ORDER BY created_at DESC, id LIMIT ? OFFSET ?;`,
+      [PRODUCT_PER_PAGE, (page - 1) * PRODUCT_PER_PAGE],
     )
 
     return data[0] as {
@@ -26,11 +28,13 @@ export const getProducts = unstable_cache(
   { tags: ["products"] },
 )
 
-interface ProductListContentProps {}
+interface ProductListContentProps {
+  page: number
+}
 
-export async function ProductListContent({}: ProductListContentProps) {
+export async function ProductListContent({ page }: ProductListContentProps) {
   const user = getUser()
-  const products = await getProducts()
+  const products = await getProducts(page)
 
   return (
     <ul className="space-y-6">
