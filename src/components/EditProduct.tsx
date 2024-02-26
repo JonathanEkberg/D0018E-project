@@ -84,14 +84,13 @@ export function EditProduct({
   stock,
 }: EditProductProps) {
   return (
-    // <Card className="bg-zinc-900 p-6 rounded-md w-full">
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Edit product</CardTitle>
         <CardDescription>Modify existing products.</CardDescription>
       </CardHeader>
       <form action={editProduct}>
-        <input hidden readOnly value={id} />
+        <input hidden readOnly name="id" value={id} />
         <CardContent className="space-y-2">
           <div>
             <Label htmlFor="name">Name</Label>
