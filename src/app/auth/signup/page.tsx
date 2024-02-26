@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card"
 import { ReviewImage } from "@/components/ReviewImage"
 import { Star } from "lucide-react"
+import { hash } from "argon2"
 
 async function signupAction(formData: FormData) {
   "use server"
@@ -52,13 +53,24 @@ async function signupAction(formData: FormData) {
     )
   }
 
+  const hashed = await hash(String(password))
+  console.log("NEW HASHED:", hashed)
+
   await pool.execute(
     "INSERT INTO user (name, email, password, role) VALUES (?, ?, ?, 'USER');",
-    [name, email, password],
+    [name, email, hashed],
   )
-  cookies().set("u_id", String(user[0]!.id), { maxAge: 3600 * 24 })
-  cookies().set("u_name", user[0]!.name, { maxAge: 3600 * 24 })
-  cookies().set("u_role", "USER", { maxAge: 3600 * 24 })
+  const newUser = await pool.execute(
+    "SELECT id, name, role FROM user WHERE email=?;",
+    [email],
+  )
+  const uuser = newUser[0] as [
+    { id: number; name: string; role: "ADMIN" | "USER" },
+  ]
+  console.log("NEW USER:", uuser)
+  cookies().set("u_id", String(uuser[0]!.id), { maxAge: 3600 * 24 })
+  cookies().set("u_name", uuser[0]!.name, { maxAge: 3600 * 24 })
+  cookies().set("u_role", uuser[0].role, { maxAge: 3600 * 24 })
   redirect("/")
 }
 

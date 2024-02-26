@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card"
 import { Star } from "lucide-react"
 import { ReviewImage } from "@/components/ReviewImage"
+import { verify } from "argon2"
 
 async function loginAction(formData: FormData) {
   "use server"
@@ -24,8 +25,8 @@ async function loginAction(formData: FormData) {
   }
 
   const query = await pool.execute(
-    "SELECT id, name, role FROM user WHERE email=? AND password=?",
-    [email, password],
+    "SELECT id, name, role, password FROM user WHERE email=?",
+    [email],
   )
 
   const parsed = query[0] as [
@@ -33,6 +34,7 @@ async function loginAction(formData: FormData) {
         id: number
         name: string
         role: "USER" | "ADMIN"
+        password: string
       }
     | undefined,
   ]
@@ -42,7 +44,24 @@ async function loginAction(formData: FormData) {
   if (!user) {
     redirect(
       `/auth/login?toast=${encodeURIComponent(
-        "Wrong password or the user doesn't exist.",
+        JSON.stringify({
+          type: "error",
+          message: "Wrong password or the user doesn't exist.",
+        }),
+      )}`,
+      RedirectType.replace,
+    )
+  }
+
+  const isCorrectPassword = await verify(user.password, password.toString())
+
+  if (!isCorrectPassword) {
+    redirect(
+      `/auth/login?toast=${encodeURIComponent(
+        JSON.stringify({
+          type: "error",
+          message: "Wrong password or the user doesn't exist.",
+        }),
       )}`,
       RedirectType.replace,
     )
