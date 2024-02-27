@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache"
 import { pool } from "@/lib/database"
 import {
   Table,
@@ -17,8 +16,7 @@ import { redirect } from "next/navigation"
 import { deleteOrderAction } from "../actions"
 import { Badge } from "@/components/ui/badge"
 
-const getOrders = unstable_cache(
-  async (id: number) => {
+const getOrders = async (id: number) => {
     const data = await pool.execute(
       `SELECT order.id, order.delivered, order_item.amount, order_item.product_id, order_item.price_usd, product.name
       FROM \`order\`
@@ -47,10 +45,7 @@ const getOrders = unstable_cache(
       orders[key].push(item)
     }
     return orders
-  },
-  ["orders"],
-  { tags: ["orders"], revalidate: 30 },
-)
+  }
 
 export default async function OrderPage() {
   const user = getUser()

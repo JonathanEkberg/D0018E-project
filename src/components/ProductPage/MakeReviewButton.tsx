@@ -58,7 +58,7 @@ export function MakeReviewButton({ productId }: MakeReviewButtonProps) {
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <form onSubmit={onSubmit} className="space-y-2">
+        <form onSubmit={onSubmit} className="space-y-4">
           <DialogHeader>
             <DialogTitle>Make review</DialogTitle>
           </DialogHeader>

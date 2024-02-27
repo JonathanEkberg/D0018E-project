@@ -6,11 +6,9 @@ import { Skeleton } from "../ui/skeleton"
 import Image from "next/image"
 import Link from "next/link"
 import { Badge } from "../ui/badge"
-import { unstable_cache } from "next/cache"
 import { getUser } from "@/lib/user"
 
-export const getProducts = unstable_cache(
-  async (page: number) => {
+export const getProducts = async (page: number) => {
     const PRODUCT_PER_PAGE = 10
     const data = await pool.execute(
       `SELECT id, name, description, image FROM product ORDER BY created_at DESC, id LIMIT ? OFFSET ?;`,
@@ -23,10 +21,7 @@ export const getProducts = unstable_cache(
       description: string
       image: string
     }[]
-  },
-  ["products"],
-  { tags: ["products"] },
-)
+  }
 
 interface ProductListContentProps {
   page: number

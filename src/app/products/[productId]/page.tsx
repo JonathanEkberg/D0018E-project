@@ -1,31 +1,28 @@
-import { unstable_cache } from "next/cache"
 import React from "react"
 import { pool } from "@/lib/database"
 import { notFound } from "next/navigation"
 import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { getUser } from "@/lib/user"
-import { addToCartAction } from "@/app/actions"
-import { Card, CardContent } from "@/components/ui/card"
-import { BoxIcon, PlusIcon, StarIcon } from "lucide-react"
+import { BoxIcon, StarIcon } from "lucide-react"
 import clsx from "clsx"
 import { AddToCart } from "@/components/ProductPage/AddToCart"
 import dayjs from "dayjs"
 import dayjsRelativeTime from "dayjs/plugin/relativeTime"
 import dayjsLocalized from "dayjs/plugin/localizedFormat"
+import dayjsTimezone from "dayjs/plugin/timezone"
+import dayjsUtc from "dayjs/plugin/utc"
 import "dayjs/locale/sv"
-import { Separator } from "@/components/ui/separator"
 import { MakeReviewButton } from "@/components/ProductPage/MakeReviewButton"
 import localeData from "dayjs/plugin/localeData"
+import { create } from "domain"
 
 dayjs.extend(dayjsRelativeTime)
 dayjs.extend(dayjsLocalized)
 dayjs.extend(localeData)
+dayjs.extend(dayjsUtc)
+dayjs.extend(dayjsTimezone)
 dayjs.locale("sv")
 
-const getProduct = unstable_cache(
-  async (id: number) => {
+const getProduct = async (id: number) => {
     const data = await pool.execute(
       `SELECT id, name, description, image, price_usd, stock FROM product WHERE id = ?;`,
       [id],
@@ -45,10 +42,7 @@ const getProduct = unstable_cache(
           ]
         | []
     )[0]
-  },
-  ["product-id"],
-  { tags: ["product-id"], revalidate: 30 },
-)
+  }
 
 async function getReviews(product_id: number) {
   const data = await pool.execute(
@@ -77,13 +71,13 @@ async function Review({
   user: { id: number; name: string }
 }) {
   return (
-    <div>
+    <div >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <span className="text-lg font-bold">{user.name}</span>
           <span className="text-lg font-bold">•</span>
           <div className="text-sm text-muted-foreground">
-            {`${dayjs(createdAt).fromNow()} - ${dayjs(createdAt).format(
+            {`${dayjs(dayjs(createdAt).utc(true)).fromNow()} - ${dayjs(dayjs(createdAt).utc(true)).tz("Europe/Stockholm",false).format(
               "LLL",
             )}`}
           </div>
@@ -106,7 +100,7 @@ async function Review({
             />
           ))}
       </div>
-      <p>{text}</p>
+      <p className="break-words">{text}</p>
     </div>
   )
 }

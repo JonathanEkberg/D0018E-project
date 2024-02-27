@@ -20,9 +20,17 @@ const schema = z.object({
   id: z.coerce.number(),
   name: z.string(),
   description: z.string(),
-  image: z.string(),
-  price_usd: z.coerce.number().positive().nullish(),
-  stock: z.coerce.number().positive().nullish(),
+  image: z.string().url(),
+  price_usd: z.coerce
+    .number()
+    .min(0)
+    .max(2000000000, { message: "Price too high" })
+    .nullish(),
+  stock: z.coerce
+    .number()
+    .min(0)
+    .max(2000000000, { message: "Stock too large" })
+    .nullish(),
 })
 
 export async function editProduct(formData: FormData) {
@@ -150,8 +158,8 @@ export function EditProduct({
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button type="submit">Create</Button>
           <EditProductDeleteButton id={id} />
+          <Button type="submit">Save</Button>
         </CardFooter>
       </form>
     </Card>

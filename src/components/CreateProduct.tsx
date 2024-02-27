@@ -19,7 +19,7 @@ import { z } from "zod"
 const schema = z.object({
   name: z.string(),
   description: z.string(),
-  image: z.string(),
+  image: z.string().url(),
   price_usd: z.coerce
     .number()
     .min(0)

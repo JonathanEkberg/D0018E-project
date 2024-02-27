@@ -1,6 +1,4 @@
 import React from "react"
-import { unstable_cache } from "next/cache"
-import { pool } from "@/lib/database"
 
 interface OrderItemPageProps {
   params: { orderId: string }

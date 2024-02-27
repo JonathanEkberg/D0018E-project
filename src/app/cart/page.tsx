@@ -5,7 +5,6 @@ import { redirect } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Trash } from "lucide-react"
-import { unstable_cache } from "next/cache"
 import {
   Table,
   TableBody,
@@ -25,8 +24,7 @@ import { purchaseAction, removeCartItemAction } from "../actions"
 import { CartItemAmount } from "@/components/Cart/CartItemAmount"
 import { DollarFormatter } from "@/components/DollarFormatter"
 
-const getShoppingCartItems = unstable_cache(
-  async (userId: number) => {
+const getShoppingCartItems = async (userId: number) => {
     const data = await pool.execute(
       `SELECT
 sci.id as sci_id, sci.amount as sci_amount,
@@ -45,13 +43,9 @@ WHERE sci.user_id = ?;`,
       p_image: string
       p_price_usd: number | null
     }[]
-  },
-  ["cart-items"],
-  { tags: ["cart-items"] },
-)
+ }
 
-const getShoppingCartTotal = unstable_cache(
-  async (userId: number) => {
+const getShoppingCartTotal = async (userId: number) => {
     const data = await pool.execute(
       `SELECT
 SUM(sci.amount * p.price_usd) as total_price
@@ -68,10 +62,8 @@ WHERE sci.user_id = ?;`,
         },
       ]
     )[0].total_price
-  },
-  ["cart-total"],
-  { tags: ["cart-total"], revalidate: 60 },
-)
+  }
+
 
 interface CartPageProps {}
 
